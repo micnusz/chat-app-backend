@@ -1,5 +1,6 @@
 package com.micnusz.chat.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.micnusz.chat.dto.AuthResponseDTO;
+import com.micnusz.chat.dto.ErrorResponseDTO;
 import com.micnusz.chat.dto.UserRequestDTO;
 import com.micnusz.chat.mapper.UserMapper;
 import com.micnusz.chat.model.User;
@@ -27,17 +29,29 @@ public class UserController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public AuthResponseDTO registerUser(@RequestBody @Valid UserRequestDTO request) {
-        User user = userService.createUser(userMapper.toEntity(request));
-        String token = jwtUtil.generateToken(user.getUsername());
-        return new AuthResponseDTO(userMapper.toResponse(user), token);
+    public ResponseEntity<?> registerUser(@RequestBody @Valid UserRequestDTO request) {
+        try {
+            User user = userService.createUser(userMapper.toEntity(request));
+            String token = jwtUtil.generateToken(user.getUsername());
+            return ResponseEntity.ok(new AuthResponseDTO(userMapper.toResponse(user), token));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ErrorResponseDTO(e.getMessage()));
+        }
     }
 
     @PostMapping("/login")
-    public AuthResponseDTO login(@RequestBody @Valid UserRequestDTO request) {
-        User user = userService.loginUser(request.getUsername());
-        String token = jwtUtil.generateToken(user.getUsername());
-        return new AuthResponseDTO(userMapper.toResponse(user), token);
+    public ResponseEntity<?> login(@RequestBody @Valid UserRequestDTO request) {
+        try {
+            User user = userService.loginUser(request.getUsername());
+            String token = jwtUtil.generateToken(user.getUsername());
+            return ResponseEntity.ok(new AuthResponseDTO(userMapper.toResponse(user), token));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ErrorResponseDTO(e.getMessage()));
+        }
     }
 
 }
