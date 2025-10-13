@@ -1,7 +1,9 @@
 package com.micnusz.chat.handler;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.web.socket.CloseStatus;
@@ -9,6 +11,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micnusz.chat.util.JwtUtil;
 
 public class ChatWebSocketHandler extends TextWebSocketHandler {
@@ -46,21 +49,28 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String username = (String) session.getAttributes().get("username");
+protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    String username = (String) session.getAttributes().get("username");
 
-        // Broadcast message with username prefix
-        String payload = username + ": " + message.getPayload();
-        System.out.println("Message: " + payload);
+    // Utwórz czystą wiadomość JSON
+    Map<String, String> payload = new HashMap<>();
+    payload.put("username", username);
+    payload.put("message", message.getPayload()); // tutaj message.getPayload() to już czysty tekst
 
-        synchronized (sessions) {
-            for (WebSocketSession s : sessions) {
-                if (s.isOpen()) {
-                    s.sendMessage(new TextMessage(payload));
-                }
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(payload); // teraz JSON z jednym poziomem
+
+    System.out.println("Message: " + json);
+
+    synchronized (sessions) {
+        for (WebSocketSession s : sessions) {
+            if (s.isOpen()) {
+                s.sendMessage(new TextMessage(json));
             }
         }
     }
+}
+
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
