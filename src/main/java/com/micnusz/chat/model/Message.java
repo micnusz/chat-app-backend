@@ -1,6 +1,6 @@
 package com.micnusz.chat.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,7 +31,7 @@ public class Message {
 
     private String roomId; 
 
-    private LocalDateTime timestamp;
+    private String timestamp;
 
     public Message() {}
 
@@ -39,6 +39,6 @@ public class Message {
         this.sender = sender;
         this.content = content;
         this.roomId = roomId;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = Instant.now().toString();
     }
 }

@@ -1,9 +1,7 @@
 package com.micnusz.chat.handler;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.web.socket.CloseStatus;
@@ -12,27 +10,30 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.micnusz.chat.dto.MessageRequestDTO;
+import com.micnusz.chat.dto.MessageResponseDTO;
+import com.micnusz.chat.mapper.MessagesMapper;
 import com.micnusz.chat.model.User;
-import com.micnusz.chat.repository.MessagesRepository;
 import com.micnusz.chat.repository.UserRepository;
+import com.micnusz.chat.service.MessagesService;
 import com.micnusz.chat.util.JwtUtil;
-
-
-
-
 
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
     private final JwtUtil jwtUtil;
-    private final MessagesRepository messagesRepository;
+    private final MessagesService messagesService;
     private final UserRepository userRepository;
+    private final MessagesMapper messagesMapper; // dodany mapper
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChatWebSocketHandler(JwtUtil jwtUtil, MessagesRepository messagesRepository, UserRepository userRepository) {
+    // Konstruktor teraz przyjmuje mapper
+    public ChatWebSocketHandler(JwtUtil jwtUtil, MessagesService messagesService,
+                                UserRepository userRepository, MessagesMapper messagesMapper) {
         this.jwtUtil = jwtUtil;
-        this.messagesRepository = messagesRepository;
+        this.messagesService = messagesService;
         this.userRepository = userRepository;
+        this.messagesMapper = messagesMapper;
     }
 
     @Override
@@ -56,36 +57,32 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-protected void handleTextMessage(WebSocketSession session, TextMessage wsMessage) throws Exception {
-    String username = (String) session.getAttributes().get("username");
+    protected void handleTextMessage(WebSocketSession session, TextMessage wsMessage) throws Exception {
+        String username = (String) session.getAttributes().get("username");
 
-    User sender = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    // Tworzymy encję z czystą treścią wiadomości
-    com.micnusz.chat.model.Message msg = new com.micnusz.chat.model.Message(
-            sender,          // powiązany użytkownik
-            wsMessage.getPayload(), // tylko tekst wiadomości
-            "default-room"   // roomId
-    );
+        // Parsujemy JSON przychodzący od frontendu do DTO
+        MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
 
-    messagesRepository.save(msg); // zapis do bazy
+        // Zapisujemy wiadomość do bazy przez serwis, teraz z użyciem DTO
+        var savedMessage = messagesService.saveMessage(sender, requestDTO);
 
-    // JSON dla frontendu
-    Map<String, String> payload = new HashMap<>();
-    payload.put("username", sender.getUsername());
-    payload.put("message", wsMessage.getPayload()); // tylko tekst
-    String json = objectMapper.writeValueAsString(payload);
+        // Mapujemy encję na DTO odpowiedzi
+        MessageResponseDTO responseDTO = messagesMapper.toDTO(savedMessage);
 
-    synchronized (sessions) {
-        for (WebSocketSession s : sessions) {
-            if (s.isOpen()) {
-                s.sendMessage(new TextMessage(json));
+        String json = objectMapper.writeValueAsString(responseDTO);
+
+        // Wysyłamy do wszystkich połączonych klientów
+        synchronized (sessions) {
+            for (WebSocketSession s : sessions) {
+                if (s.isOpen()) {
+                    s.sendMessage(new TextMessage(json));
+                }
             }
         }
     }
-}
-
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
