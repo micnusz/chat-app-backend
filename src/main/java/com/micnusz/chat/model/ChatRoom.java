@@ -12,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
@@ -38,6 +40,14 @@ public class ChatRoom {
     private User createdBy;
 
     private LocalDateTime createdAt;
+
+    @ManyToMany
+    @JoinTable(
+    name = "chatroom_users",
+    joinColumns = @JoinColumn(name = "chatroom_id"),
+    inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> users = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
