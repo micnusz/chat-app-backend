@@ -21,7 +21,7 @@ public class MessagesController {
     private final MessagesService messageService;
 
     @GetMapping("/{roomId}")
-    public List<Message> getMessages(@PathVariable String roomId) {
+    public List<Message> getMessages(@PathVariable Long roomId) {
         return messageService.getMessagesByRoom(roomId);
     }
 }

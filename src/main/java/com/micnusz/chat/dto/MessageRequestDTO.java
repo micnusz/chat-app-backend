@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class MessageRequestDTO {
-    private String username;
-    private String message;
-    private String roomId;
+    private String username;  
+    private String content;   
+    private Long roomId;      
 }

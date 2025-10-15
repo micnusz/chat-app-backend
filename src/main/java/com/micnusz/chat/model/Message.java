@@ -23,22 +23,24 @@ public class Message {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "sender_id")
     private User sender; 
 
-    @Column(length = 1000)
+    @Column(length = 1000, nullable=false)
     private String content;
-
-    private String roomId; 
 
     private String timestamp;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="chat_room_id")
+    private ChatRoom chatRoom;
+
     public Message() {}
 
-    public Message(User sender, String content, String roomId) {
+    public Message(User sender, String content, ChatRoom chatRoom) {
         this.sender = sender;
         this.content = content;
-        this.roomId = roomId;
         this.timestamp = Instant.now().toString();
+        this.chatRoom = chatRoom;
     }
 }
