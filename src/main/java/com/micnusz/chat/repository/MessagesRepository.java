@@ -8,5 +8,5 @@ import com.micnusz.chat.model.Message;
 
 public interface MessagesRepository extends JpaRepository<Message, Long> {
     
-    List<Message> findByRoomIdOrderByTimestampAsc(Long chatRoomId);
+    List<Message> findByChatRoomIdOrderByTimestampAsc(Long chatRoomId);
 }

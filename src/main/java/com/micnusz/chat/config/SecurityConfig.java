@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/users/login",
                     "/api/users/register",
+                    "/api/chat/**",
                     "/chat/**",
                     "/h2-console/**" // zezwól na H2
                 ).permitAll()

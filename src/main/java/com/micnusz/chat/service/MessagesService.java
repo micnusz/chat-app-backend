@@ -32,6 +32,6 @@ public class MessagesService {
     }
 
     public List<Message> getMessagesByRoom(Long roomId) {
-        return messagesRepository.findByRoomIdOrderByTimestampAsc(roomId);
+        return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId);
     }
 }
