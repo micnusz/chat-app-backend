@@ -23,13 +23,19 @@ public class ChatRoomService {
     private final UserRepository userRepository;
     private final ChatRoomMapper chatRoomMapper;
 
-    public ChatRoomResponseDTO createRoom(ChatRoomRequestDTO dto) {
-        User creator = userRepository.findByUsername(dto.getCreatedByUsername())
-                .orElseThrow(() -> new RuntimeException("User not found: " + dto.getCreatedByUsername()));
-        ChatRoom chatRoom = chatRoomMapper.toEntity(dto, creator);
-        ChatRoom saved = chatRoomRepository.save(chatRoom);
-        return chatRoomMapper.toDto(saved);
-    }
+    public ChatRoomResponseDTO createRoom(ChatRoomRequestDTO request, String username) {
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+    ChatRoom chatRoom = new ChatRoom();
+    chatRoom.setName(request.getName());
+    chatRoom.setPassword(request.getPassword());
+    chatRoom.setCreatedBy(user);
+    
+    chatRoomRepository.save(chatRoom);
+
+    return new ChatRoomResponseDTO(chatRoom);
+}
 
     public List<ChatRoomResponseDTO> getAllRooms() {
         return chatRoomRepository.findAll().stream().map(chatRoomMapper::toDto).collect(Collectors.toList());

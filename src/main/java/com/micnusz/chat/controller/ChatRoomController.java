@@ -3,6 +3,7 @@ package com.micnusz.chat.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,8 +30,10 @@ public class ChatRoomController {
 
 
     @PostMapping("/rooms")
-    public ResponseEntity<ChatRoomResponseDTO> createChatRoom(@RequestBody ChatRoomRequestDTO request) {
-        ChatRoomResponseDTO response = chatRoomService.createRoom(request);
+    public ResponseEntity<ChatRoomResponseDTO> createChatRoom(@RequestBody ChatRoomRequestDTO request,
+            Authentication authentication) {
+        String username = authentication.getName();
+        ChatRoomResponseDTO response = chatRoomService.createRoom(request, username);
         return ResponseEntity.ok(response);
     }
     
