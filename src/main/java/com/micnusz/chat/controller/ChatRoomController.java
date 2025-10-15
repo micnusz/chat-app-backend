@@ -2,6 +2,7 @@ package com.micnusz.chat.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,12 +11,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.micnusz.chat.model.ChatRoom;
-import com.micnusz.chat.repository.ChatRoomRepository;
+import com.micnusz.chat.dto.ChatRoomRequestDTO;
+import com.micnusz.chat.dto.ChatRoomResponseDTO;
+import com.micnusz.chat.service.ChatRoomService;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -25,28 +25,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class ChatRoomController {
 
-    private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomService chatRoomService;
 
 
     @PostMapping("/rooms")
-    public ChatRoom createChatRoom(@RequestBody ChatRoom chatRoom) {
-        return chatRoomRepository.save(chatRoom);
-
+    public ResponseEntity<ChatRoomResponseDTO> createChatRoom(@RequestBody ChatRoomRequestDTO request) {
+        ChatRoomResponseDTO response = chatRoomService.createRoom(request);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/rooms")
-    public List<ChatRoom> getChatRoom() {
-        return chatRoomRepository.findAll();
+    public ResponseEntity<List<ChatRoomResponseDTO>> getAllRooms() {
+        return ResponseEntity.ok(chatRoomService.getAllRooms());
     }
 
     @GetMapping("/rooms/{id}")
-    public ChatRoom getChatRoomById(@PathVariable Long chatRoomId) {
-        return chatRoomRepository.findById(chatRoomId);
+    public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id) {
+        return ResponseEntity.ok(chatRoomService.getRoomById(id));
     }
 
     @DeleteMapping("/rooms/{id}")
-    public void deleteChatRoomById(@PathVariable Long chatRoomId) {
-        chatRoomRepository.deleteById(chatRoomId);
+    public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {
+        chatRoomService.deleteRoom(id);
+        return ResponseEntity.noContent().build();
     }
     
     
