@@ -13,32 +13,34 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micnusz.chat.dto.MessageRequestDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
 import com.micnusz.chat.mapper.MessagesMapper;
+import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
+import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
 import com.micnusz.chat.service.MessagesService;
 import com.micnusz.chat.util.JwtUtil;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
     private final JwtUtil jwtUtil;
     private final MessagesService messagesService;
     private final UserRepository userRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final MessagesMapper messagesMapper; // dodany mapper
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Konstruktor teraz przyjmuje mapper
-    public ChatWebSocketHandler(JwtUtil jwtUtil, MessagesService messagesService,
-                                UserRepository userRepository, MessagesMapper messagesMapper) {
-        this.jwtUtil = jwtUtil;
-        this.messagesService = messagesService;
-        this.userRepository = userRepository;
-        this.messagesMapper = messagesMapper;
-    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String query = session.getUri().getQuery(); // np. token=...
+        String path = session.getUri().getPath(); 
+        String[] segments = path.split("/");
+        Long roomId = Long.parseLong(segments[segments.length - 1]); 
+
+        String query = session.getUri().getQuery(); 
         String token = null;
         if (query != null && query.startsWith("token=")) {
             token = query.substring(6);
@@ -51,38 +53,43 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         String username = jwtUtil.extractUsername(token);
         session.getAttributes().put("username", username);
+        session.getAttributes().put("roomId", roomId);
 
         sessions.add(session);
-        System.out.println("Connected: " + session.getId() + " as " + username);
+        System.out.println("Connected: " + session.getId() + " as " + username + " in room " + roomId);
     }
+
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage wsMessage) throws Exception {
         String username = (String) session.getAttributes().get("username");
-
         User sender = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Parsujemy JSON przychodzący od frontendu do DTO
         MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
 
-        // Zapisujemy wiadomość do bazy przez serwis, teraz z użyciem DTO
-        var savedMessage = messagesService.saveMessage(sender, requestDTO);
+        ChatRoom room = chatRoomRepository.findById(requestDTO.getRoomId())
+                .orElseThrow(() -> new RuntimeException("Room not found with id: " + requestDTO.getRoomId()));
+        var savedMessage = messagesService.saveMessage(sender, requestDTO, room);
 
-        // Mapujemy encję na DTO odpowiedzi
         MessageResponseDTO responseDTO = messagesMapper.toDTO(savedMessage);
 
         String json = objectMapper.writeValueAsString(responseDTO);
 
-        // Wysyłamy do wszystkich połączonych klientów
+
         synchronized (sessions) {
             for (WebSocketSession s : sessions) {
-                if (s.isOpen()) {
-                    s.sendMessage(new TextMessage(json));
+                if (s.isOpen() && s.getAttributes().get("username") != null) {
+                    String sessionUsername = (String) s.getAttributes().get("username");
+                    Long sessionRoomId = (Long) s.getAttributes().get("roomId");
+                    if (!session.getId().equals(s.getId()) && sessionRoomId.equals(room.getId())) {
+                        s.sendMessage(new TextMessage(json));
+                    }
                 }
             }
         }
     }
+
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {

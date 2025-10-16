@@ -76,7 +76,16 @@ public class ChatRoomController {
     }
 
     @GetMapping("/rooms/{id}")
-    public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id) {
+    public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id, Authentication authentication) {
+        ChatRoom chatRoom = chatRoomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Chatroom not found with id: " + id));
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()
+                && !chatRoom.getUsers().contains(user)) {
+            return ResponseEntity.status(403).body(null);
+        } 
         return ResponseEntity.ok(chatRoomService.getRoomById(id));
     }
 
