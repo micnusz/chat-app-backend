@@ -56,9 +56,25 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         session.getAttributes().put("username", username);
         session.getAttributes().put("roomId", roomId);
 
+        // Sprawdzenie, czy użytkownik w tym pokoju już jest połączony
+        boolean alreadyConnected = sessions.stream()
+            .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
+                           username.equals(s.getAttributes().get("username")));
+
         sessions.add(session);
+
+        if (!alreadyConnected) {
+            // Systemowa wiadomość – użytkownik połączył się pierwszy raz
+            MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
+            systemJoinMsg.setContent(username + " joined the chat");
+            systemJoinMsg.setRoomId(roomId);
+            systemJoinMsg.setUsername("System");
+            broadcastToRoom(roomId, systemJoinMsg, session);
+        }
+
         System.out.println("Connected: " + session.getId() + " as " + username + " in room " + roomId);
     }
+
 
 
     @Override
@@ -93,9 +109,49 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        sessions.remove(session);
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        boolean removed;
+        synchronized (sessions) {
+            removed = sessions.remove(session);
+        }
+
+        if (!removed) {
+            return;
+        }
+
         String username = (String) session.getAttributes().get("username");
+        Long roomId = (Long) session.getAttributes().get("roomId");
+
+        boolean stillConnected;
+        synchronized (sessions) {
+            stillConnected = sessions.stream().anyMatch(s -> {
+                String sUsername = (String) s.getAttributes().get("username");
+                Long sRoomId = (Long) s.getAttributes().get("roomId");
+                return sUsername.equals(username) && sRoomId.equals(roomId) && s.isOpen();
+            });
+        }
+
+        if (!stillConnected && username != null && roomId != null) {
+            MessageResponseDTO systemLeaveMsg = new MessageResponseDTO();
+            systemLeaveMsg.setContent(username + " left the chat");
+            systemLeaveMsg.setRoomId(roomId);
+            systemLeaveMsg.setUsername("System");
+            broadcastToRoom(roomId, systemLeaveMsg, null);
+        }
+
         System.out.println("Disconnected: " + session.getId() + " (" + username + ")");
+    }
+
+
+    private void broadcastToRoom(Long roomId, MessageResponseDTO msg, WebSocketSession exclude) throws Exception {
+        String json = objectMapper.writeValueAsString(msg);
+        synchronized (sessions) {
+            for (WebSocketSession s : sessions) {
+                Long sRoomId = (Long) s.getAttributes().get("roomId");
+                if (s.isOpen() && roomId.equals(sRoomId) && (exclude == null || !s.getId().equals(exclude.getId()))) {
+                    s.sendMessage(new TextMessage(json));
+                }
+            }
+        }
     }
 }
