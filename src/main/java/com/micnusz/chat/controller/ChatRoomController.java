@@ -1,5 +1,6 @@
 package com.micnusz.chat.controller;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import com.micnusz.chat.service.ChatRoomService;
 import com.micnusz.chat.service.MessagesService;
 
 import lombok.RequiredArgsConstructor;
+
 
 
 
@@ -118,10 +120,13 @@ public class ChatRoomController {
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId) {
         List<MessageResponseDTO> dtos = messagesService.getMessagesByRoomAsDTO(roomId);
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(dtos != null ? dtos : Collections.emptyList());
     }
+
     
 
+
+    
 
     @DeleteMapping("/rooms/{id}")
     public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {

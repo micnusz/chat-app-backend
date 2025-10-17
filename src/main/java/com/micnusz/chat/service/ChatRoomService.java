@@ -40,6 +40,7 @@ public class ChatRoomService {
     public List<ChatRoomResponseDTO> getAllRooms() {
         return chatRoomRepository.findAll().stream().map(chatRoomMapper::toDto).collect(Collectors.toList());
     }
+    
 
     public ChatRoomResponseDTO getRoomById(Long id) {
         ChatRoom chatRoom = chatRoomRepository.findById(id)
@@ -54,6 +55,9 @@ public class ChatRoomService {
         }
         chatRoomRepository.deleteById(id);
     }
+
+
+    
 }
 
 

@@ -30,8 +30,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final MessagesService messagesService;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final MessagesMapper messagesMapper; // dodany mapper
+    private final MessagesMapper messagesMapper; 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
 
 
     @Override

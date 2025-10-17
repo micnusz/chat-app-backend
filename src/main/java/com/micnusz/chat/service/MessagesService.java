@@ -1,6 +1,8 @@
 package com.micnusz.chat.service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -30,11 +32,13 @@ public class MessagesService {
 
 
     public List<MessageResponseDTO> getMessagesByRoomAsDTO(Long roomId) {
-        List<Message> messages = messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId);
-        return messages.stream()
-                       .map(message -> messagesMapper.toDTO(message))
-                       .toList();
-    }
+    return Optional.ofNullable(messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId))
+                   .orElse(Collections.emptyList())
+                   .stream()
+                   .map(messagesMapper::toDTO)
+                   .toList();
+}
+
 
     
 }

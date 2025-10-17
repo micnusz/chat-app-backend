@@ -23,7 +23,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final MessagesService messagesService;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final MessagesMapper messagesMapper; 
+    private final MessagesMapper messagesMapper;
+
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
