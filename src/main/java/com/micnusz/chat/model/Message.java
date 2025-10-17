@@ -8,13 +8,17 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "messages")
+@Table(name = "messages", 
+        indexes = {
+        @Index(name = "idx_chat_room_id", columnList = "chat_room_id")
+    })
 @Data
 public class Message {
 

@@ -15,13 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
+import com.micnusz.chat.dto.MessageResponseDTO;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
 import com.micnusz.chat.service.ChatRoomService;
+import com.micnusz.chat.service.MessagesService;
 
 import lombok.RequiredArgsConstructor;
+
 
 
 
@@ -32,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
+    private final MessagesService messagesService;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
@@ -45,12 +49,14 @@ public class ChatRoomController {
     }
 
     @PostMapping("/rooms/{roomId}/join")
-    public ResponseEntity<?> joinRoom(@PathVariable Long roomId, @RequestBody(required=false) Map<String, String> body, Authentication authentication) throws RuntimeException {
+    public ResponseEntity<?> joinRoom(@PathVariable Long roomId,
+            @RequestBody(required = false) Map<String, String> body, Authentication authentication)
+            throws RuntimeException {
         String username = authentication.getName();
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
-    
+
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
         String providedPassword = body != null ? body.get("password") : null;
@@ -61,13 +67,33 @@ public class ChatRoomController {
             }
         }
 
+        room.getUsers().add(user);
+        chatRoomRepository.save(room);
 
-    room.getUsers().add(user);
-    chatRoomRepository.save(room);
-
-    return ResponseEntity.ok(Map.of("message", "Joined room successfully"));
+        return ResponseEntity.ok(Map.of("message", "Joined room successfully"));
 
     }
+    
+    @PostMapping("/rooms/{roomId}/leave")
+    public ResponseEntity<?> leaveRoom(@PathVariable Long roomId, Authentication authentication) {
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
+
+        if (!chatRoom.getUsers().contains(user)) {
+            return ResponseEntity.status(400).body(Map.of("message", "User is not in the room"));
+        }
+
+        chatRoom.getUsers().remove(user);
+        chatRoomRepository.save(chatRoom);
+
+        return ResponseEntity.ok(Map.of("message", "Left room successfully"));
+    }
+    
     
     
     @GetMapping("/rooms")
@@ -85,9 +111,17 @@ public class ChatRoomController {
         if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()
                 && !chatRoom.getUsers().contains(user)) {
             return ResponseEntity.status(403).body(null);
-        } 
+        }
         return ResponseEntity.ok(chatRoomService.getRoomById(id));
     }
+    
+    @GetMapping("/rooms/{roomId}/messages")
+    public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId) {
+        List<MessageResponseDTO> dtos = messagesService.getMessagesByRoomAsDTO(roomId);
+        return ResponseEntity.ok(dtos);
+    }
+    
+
 
     @DeleteMapping("/rooms/{id}")
     public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {
