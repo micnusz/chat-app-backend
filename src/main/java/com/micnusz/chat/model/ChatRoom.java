@@ -17,6 +17,8 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
@@ -27,9 +29,12 @@ public class ChatRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Chat room name cannot be blank.")
+    @Size(min = 3, max = 50, message = "Chat room name must be between 3 and 50 characters.")
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Size(max = 100, message = "Password cannot exceed 100 characters.")
     private String password;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)

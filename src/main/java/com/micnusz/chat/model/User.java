@@ -10,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -21,7 +23,9 @@ public class User {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique=true)
+    @Column(unique = true, nullable=false)
+    @NotBlank(message = "Username cannot be blank.")
+    @Size(min = 3, max = 20, message = "Chat room name must be between 3 and 20 characters.")
     private String username;
 
     @OneToMany(mappedBy = "createdBy")
