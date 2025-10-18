@@ -54,4 +54,12 @@ public class UserController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logoutUser(@RequestBody String entity) {
+        
+        
+        return entity;
+    }
+    
+
 }
