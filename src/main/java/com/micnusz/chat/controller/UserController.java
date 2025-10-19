@@ -30,15 +30,9 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody @Valid UserRequestDTO request) {
-        try {
             User user = userService.createUser(userMapper.toEntity(request));
             String token = jwtUtil.generateToken(user.getUsername());
             return ResponseEntity.ok(new AuthResponseDTO(userMapper.toResponse(user), token));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new ErrorResponseDTO(e.getMessage()));
-        }
     }
 
     @PostMapping("/login")

@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.micnusz.chat.exception.UserNotFoundException;
+import com.micnusz.chat.exception.UsernameAlreadyExistsException;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.UserRepository;
 
@@ -18,15 +20,15 @@ public class UserService {
     public User createUser(User user) {
         Optional<User> existing = userRepository.findByUsername(user.getUsername());
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("User with the same username already exists.");
+            throw new UsernameAlreadyExistsException(user.getUsername());
         }
         return userRepository.save(user);
     }
 
+
     public User loginUser(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "User with '" + username + "'username does not exists."));
+                .orElseThrow(() -> new UserNotFoundException(username));
     }
 
      public Optional<User> findByUsername(String username) {
