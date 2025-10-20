@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.micnusz.chat.dto.ErrorResponseDTO;
+import com.micnusz.chat.exception.IncorrectPasswordException;
+import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.exception.UsernameAlreadyExistsException;
 
@@ -24,6 +26,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleUserNotFound(UserNotFoundException exception) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
+    }
+
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRoomNotFound(RoomNotFoundException exception) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
+    }
+
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public ResponseEntity<ErrorResponseDTO> handleIncorrectPassword(IncorrectPasswordException exception) {
         return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
     }
 

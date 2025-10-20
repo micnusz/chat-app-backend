@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
+import com.micnusz.chat.exception.IncorrectPasswordException;
+import com.micnusz.chat.exception.RoomNotFoundException;
+import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.mapper.ChatRoomMapper;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
@@ -39,6 +42,21 @@ public class ChatRoomService {
 
     public List<ChatRoomResponseDTO> getAllRooms() {
         return chatRoomRepository.findAll().stream().map(chatRoomMapper::toDto).collect(Collectors.toList());
+    }
+    
+    
+    public void joinRoom(Long roomId, String username, String password) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> new RoomNotFoundException(roomId));
+
+        if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()) {
+            if (password == null || !password.equals(chatRoom.getPassword())) {
+                throw new IncorrectPasswordException(password);
+            }
+        }
+
+        chatRoom.getUsers().add(user);
+        chatRoomRepository.save(chatRoom);
     }
     
 

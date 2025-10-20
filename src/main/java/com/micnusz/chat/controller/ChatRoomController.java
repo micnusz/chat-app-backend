@@ -52,25 +52,12 @@ public class ChatRoomController {
 
     @PostMapping("/rooms/{roomId}/join")
     public ResponseEntity<?> joinRoom(@PathVariable Long roomId,
-            @RequestBody(required = false) Map<String, String> body, Authentication authentication)
-            throws RuntimeException {
-        String username = authentication.getName();
+            @RequestBody(required = false) Map<String, String> body, Authentication authentication) {
+                
+            String username = authentication.getName();
+            String providedPassword = body != null ? body.get("password") : null;
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
-
-        ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
-        String providedPassword = body != null ? body.get("password") : null;
-
-        if (room.getPassword() != null && !room.getPassword().isEmpty()) {
-            if (providedPassword == null || !providedPassword.equals(room.getPassword())) {
-                return ResponseEntity.status(403).body(Map.of("message", "Incorrect password"));
-            }
-        }
-
-        room.getUsers().add(user);
-        chatRoomRepository.save(room);
+            chatRoomService.joinRoom(roomId, username, providedPassword);
 
         return ResponseEntity.ok(Map.of("message", "Joined room successfully"));
 
@@ -124,10 +111,6 @@ public class ChatRoomController {
     }
 
     
-
-
-    
-
     @DeleteMapping("/rooms/{id}")
     public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {
         chatRoomService.deleteRoom(id);
