@@ -56,7 +56,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         session.getAttributes().put("username", username);
         session.getAttributes().put("roomId", roomId);
 
-        // Sprawdzenie, czy użytkownik w tym pokoju już jest połączony
         boolean alreadyConnected = sessions.stream()
             .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
                            username.equals(s.getAttributes().get("username")));
@@ -64,7 +63,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         sessions.add(session);
 
         if (!alreadyConnected) {
-            // Systemowa wiadomość – użytkownik połączył się pierwszy raz
             MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
             systemJoinMsg.setContent(username + " joined the chat");
             systemJoinMsg.setRoomId(roomId);
