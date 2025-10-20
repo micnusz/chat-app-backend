@@ -8,6 +8,7 @@ import com.micnusz.chat.dto.ErrorResponseDTO;
 import com.micnusz.chat.exception.IncorrectPasswordException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
+import com.micnusz.chat.exception.UserNotInRoomException;
 import com.micnusz.chat.exception.UsernameAlreadyExistsException;
 
 @RestControllerAdvice
@@ -39,5 +40,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
     }
 
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponseDTO> handleUserNotInRoom(UserNotInRoomException exception) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
+    }
 
 }

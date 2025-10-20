@@ -10,6 +10,7 @@ import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.exception.IncorrectPasswordException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
+import com.micnusz.chat.exception.UserNotInRoomException;
 import com.micnusz.chat.mapper.ChatRoomMapper;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
@@ -56,6 +57,21 @@ public class ChatRoomService {
         }
 
         chatRoom.getUsers().add(user);
+        chatRoomRepository.save(chatRoom);
+    }
+
+    public void leaveRoom(Long roomId, String username) {
+        User user = userRepository.findByUsername(username)
+                 .orElseThrow(() -> new UserNotFoundException(username));
+                
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RoomNotFoundException(roomId));
+
+        if (!chatRoom.getUsers().contains(user)) {
+            throw new UserNotInRoomException(username, roomId);
+    }
+
+        chatRoom.getUsers().remove(user);
         chatRoomRepository.save(chatRoom);
     }
     

@@ -41,7 +41,7 @@ public class ChatRoomController {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
 
-
+    //CREATING ROOM
     @PostMapping("/rooms")
     public ResponseEntity<ChatRoomResponseDTO> createChatRoom(@RequestBody ChatRoomRequestDTO request,
             Authentication authentication) {
@@ -49,11 +49,12 @@ public class ChatRoomController {
         ChatRoomResponseDTO response = chatRoomService.createRoom(request, username);
         return ResponseEntity.ok(response);
     }
-
+    
+    //JOINING ROOM
     @PostMapping("/rooms/{roomId}/join")
     public ResponseEntity<?> joinRoom(@PathVariable Long roomId,
             @RequestBody(required = false) Map<String, String> body, Authentication authentication) {
-                
+
             String username = authentication.getName();
             String providedPassword = body != null ? body.get("password") : null;
 
@@ -63,22 +64,12 @@ public class ChatRoomController {
 
     }
     
+    //LEAVING ROOM
     @PostMapping("/rooms/{roomId}/leave")
     public ResponseEntity<?> leaveRoom(@PathVariable Long roomId, Authentication authentication) {
         String username = authentication.getName();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
-
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + roomId));
-
-        if (!chatRoom.getUsers().contains(user)) {
-            return ResponseEntity.status(400).body(Map.of("message", "User is not in the room"));
-        }
-
-        chatRoom.getUsers().remove(user);
-        chatRoomRepository.save(chatRoom);
+        chatRoomService.leaveRoom(roomId, username);
 
         return ResponseEntity.ok(Map.of("message", "Left room successfully"));
     }
