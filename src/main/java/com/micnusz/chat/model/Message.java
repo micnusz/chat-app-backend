@@ -16,9 +16,9 @@ import lombok.Data;
 
 @Entity
 @Table(name = "messages", 
-        indexes = {
-        @Index(name = "idx_chat_room_id", columnList = "chat_room_id")
-    })
+       indexes = {
+           @Index(name = "idx_chat_room_id", columnList = "chat_room_id")
+       })
 @Data
 public class Message {
 
@@ -27,16 +27,17 @@ public class Message {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
-    private User sender; 
+    @JoinColumn(name = "sender_id", nullable = false)
+    private User sender;
 
-    @Column(length = 1000, nullable=false)
+    @Column(length = 1000, nullable = false)
     private String content;
 
-    private String timestamp;
+    @Column(nullable = false, updatable = false)
+    private Instant timestamp = Instant.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="chat_room_id")
+    @JoinColumn(name="chat_room_id", nullable = false)
     private ChatRoom chatRoom;
 
     public Message() {}
@@ -44,7 +45,15 @@ public class Message {
     public Message(User sender, String content, ChatRoom chatRoom) {
         this.sender = sender;
         this.content = content;
-        this.timestamp = Instant.now().toString();
         this.chatRoom = chatRoom;
+        this.timestamp = Instant.now(); 
+    }
+
+
+    public Message(User sender, String content, ChatRoom chatRoom, Instant timestamp) {
+        this.sender = sender;
+        this.content = content;
+        this.chatRoom = chatRoom;
+        this.timestamp = timestamp;
     }
 }

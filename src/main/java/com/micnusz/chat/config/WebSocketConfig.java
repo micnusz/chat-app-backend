@@ -5,8 +5,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micnusz.chat.handler.ChatWebSocketHandler;
-import com.micnusz.chat.mapper.MessagesMapper;
 import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
 import com.micnusz.chat.service.MessagesService;
@@ -23,13 +23,19 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final MessagesService messagesService;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final MessagesMapper messagesMapper;
+    private final ObjectMapper objectMapper; 
 
 
-    @Override
+     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(
-                new ChatWebSocketHandler(jwtUtil, messagesService, userRepository, chatRoomRepository, messagesMapper),
+                new ChatWebSocketHandler(
+                        jwtUtil,
+                        messagesService,
+                        userRepository,
+                        chatRoomRepository,
+                        objectMapper
+                ),
                 "/chat/**"
         ).setAllowedOrigins("*");
     }
