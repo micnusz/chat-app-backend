@@ -4,11 +4,11 @@ import lombok.Data;
 
 @Data
 public class MessageResponseDTO {
-    private Long id;          // ID wiadomości
-    private String username;  // autor
-    private String content;   // treść
-    private Long roomId;      // pokój
-    private String timestamp; // czas wysłania
+    private Long id;          
+    private String username;  
+    private String content;   
+    private Long roomId;      
+    private String timestamp; 
 
     public MessageResponseDTO() {}
 

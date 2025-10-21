@@ -95,11 +95,11 @@ public class ChatRoomService {
     }
 
     // DELETING ROOM
-    public void deleteRoom(Long id) {
-        if (!chatRoomRepository.existsById(id)) {
-            throw new RuntimeException("Chatroom not found with id: " + id);
+    public void deleteRoom(Long roomId) {
+        if (!chatRoomRepository.existsById(roomId)) {
+            throw new RoomNotFoundException(roomId);
         }
-        chatRoomRepository.deleteById(id);
+        chatRoomRepository.deleteById(roomId);
     }
 
 

@@ -12,10 +12,15 @@ public class UserRequestDTO {
     @Size(min = 3, max = 20)
     private String username;
 
+    @NotBlank(message = "Password cannot be empty.")
+    @Size(min = 6, max = 30, message = "Password must be between 3 and 20 characters.")
+    private String password;
+
     public UserRequestDTO() {}
 
-    public UserRequestDTO(String username) {
+    public UserRequestDTO(String username, String password) {
         this.username = username;
+        this.password = password;
     }
 
 }

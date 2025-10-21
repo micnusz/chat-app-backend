@@ -1,5 +1,6 @@
 package com.micnusz.chat.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,15 @@ public class User {
     @NotBlank(message = "Username cannot be blank.")
     @Size(min = 3, max = 20, message = "Chat room name must be between 3 and 20 characters.")
     private String username;
+
+    @NotBlank(message = "Password cannot be empty.")
+    @Size(min = 6, max = 30, message = "Password must be between 3 and 20 characters.")
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
 
     @OneToMany(mappedBy = "createdBy")
     private List<ChatRoom> createdRooms = new ArrayList<>();

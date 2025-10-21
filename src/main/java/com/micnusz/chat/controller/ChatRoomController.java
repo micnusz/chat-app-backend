@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
-import com.micnusz.chat.repository.ChatRoomRepository;
-import com.micnusz.chat.repository.UserRepository;
 import com.micnusz.chat.service.ChatRoomService;
 import com.micnusz.chat.service.MessagesService;
 
@@ -35,8 +33,7 @@ public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
     private final MessagesService messagesService;
-    private final UserRepository userRepository;
-    private final ChatRoomRepository chatRoomRepository;
+
 
     //CREATING ROOM
     @PostMapping("/rooms")
@@ -46,22 +43,22 @@ public class ChatRoomController {
         ChatRoomResponseDTO response = chatRoomService.createRoom(request, username);
         return ResponseEntity.ok(response);
     }
-    
-    //JOINING ROOM
+
+    //JOINING ROOM/{ID}
     @PostMapping("/rooms/{roomId}/join")
     public ResponseEntity<?> joinRoom(@PathVariable Long roomId,
             @RequestBody(required = false) Map<String, String> body, Authentication authentication) {
 
-            String username = authentication.getName();
-            String providedPassword = body != null ? body.get("password") : null;
+        String username = authentication.getName();
+        String providedPassword = body != null ? body.get("password") : null;
 
-            chatRoomService.joinRoom(roomId, username, providedPassword);
+        chatRoomService.joinRoom(roomId, username, providedPassword);
 
         return ResponseEntity.ok(Map.of("message", "Joined room successfully"));
 
     }
-    
-    //LEAVING ROOM
+
+    //LEAVING ROOM/{ID}
     @PostMapping("/rooms/{roomId}/leave")
     public ResponseEntity<?> leaveRoom(@PathVariable Long roomId, Authentication authentication) {
         String username = authentication.getName();
@@ -70,41 +67,38 @@ public class ChatRoomController {
 
         return ResponseEntity.ok(Map.of("message", "Left room successfully"));
     }
-    
-    
+
     //GETTING ALL ROOMS
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomResponseDTO>> getAllRooms() {
         return ResponseEntity.ok(chatRoomService.getAllRooms());
     }
 
-    //GETTING ROOM BY ID
+    //GETTING ROOM/{ID}
     @GetMapping("/rooms/{id}")
     public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id, Authentication authentication) {
-        
+
         String username = authentication.getName();
         ChatRoomResponseDTO response = chatRoomService.getRoomById(id, username, username);
 
         return ResponseEntity.ok(response);
 
-        
     }
-    
+
+    // GETTING MESSAGES IN ROOM/{ID}
     @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId, Authentication authentication) {
+    public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId,
+            Authentication authentication) {
         String username = authentication.getName();
         List<MessageResponseDTO> response = messagesService.getMessagesByRoomAsDTO(roomId, username);
         return ResponseEntity.ok(response);
     }
 
-    
+    // DELETING ROOM/{ID}
     @DeleteMapping("/rooms/{id}")
     public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {
         chatRoomService.deleteRoom(id);
         return ResponseEntity.noContent().build();
     }
-    
-    
-    
-    
+
 }
