@@ -30,9 +30,9 @@ public class User {
     private String username;
 
     @NotBlank(message = "Password cannot be empty.")
-    @Size(min = 6, max = 30, message = "Password must be between 3 and 20 characters.")
-    @Column(nullable = false)
+    @Size(min = 6, max = 100, message = "Password must be between 6 and 20 characters.")
     private String password;
+
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

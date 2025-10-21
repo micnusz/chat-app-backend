@@ -13,8 +13,9 @@ public class UserRequestDTO {
     private String username;
 
     @NotBlank(message = "Password cannot be empty.")
-    @Size(min = 6, max = 30, message = "Password must be between 3 and 20 characters.")
+    @Size(min = 6, max = 30, message = "Password must be between 6 and 30 characters.")
     private String password;
+
 
     public UserRequestDTO() {}
 

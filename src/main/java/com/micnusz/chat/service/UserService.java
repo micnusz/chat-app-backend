@@ -1,7 +1,7 @@
 package com.micnusz.chat.service;
 
-import java.util.Optional;
-
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.micnusz.chat.dto.UserRequestDTO;
@@ -20,23 +20,30 @@ public class UserService {
     
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // CREATING USER
     public UserResponseDTO createUser(UserRequestDTO request) {
-        Optional<User> existing = userRepository.findByUsername(request.getUsername());
-        if (existing.isPresent()) {
-            throw new UsernameAlreadyExistsException(request.getUsername());
-        }
+        userRepository.findByUsername(request.getUsername())
+                .ifPresent(u -> { throw new UsernameAlreadyExistsException(request.getUsername()); });
+
         User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
     }
 
     // LOGIN USER
-    public UserResponseDTO loginUser(String username) {
-       User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+    public UserResponseDTO loginUser(String username, String rawPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
 
-       return userMapper.toDto(user);
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+
+        return userMapper.toDto(user);
     }    
     
 }
