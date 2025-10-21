@@ -1,10 +1,13 @@
 package com.micnusz.chat.handler;
 
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.micnusz.chat.dto.ErrorResponseDTO;
+import com.micnusz.chat.exception.AccessDeniedException;
 import com.micnusz.chat.exception.IncorrectPasswordException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
@@ -40,9 +43,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(UserNotInRoomException.class)
     public ResponseEntity<ErrorResponseDTO> handleUserNotInRoom(UserNotInRoomException exception) {
         return ResponseEntity.badRequest().body(new ErrorResponseDTO(exception.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAccesDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponseDTO(exception.getMessage()));
     }
 
 }

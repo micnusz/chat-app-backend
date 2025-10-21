@@ -27,25 +27,27 @@ public class ChatRoomService {
     private final UserRepository userRepository;
     private final ChatRoomMapper chatRoomMapper;
 
+    // CREATING ROOM
     public ChatRoomResponseDTO createRoom(ChatRoomRequestDTO request, String username) {
-    User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
-    ChatRoom chatRoom = new ChatRoom();
-    chatRoom.setName(request.getName());
-    chatRoom.setPassword(request.getPassword());
-    chatRoom.setCreatedBy(user);
-    
-    chatRoomRepository.save(chatRoom);
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setName(request.getName());
+        chatRoom.setPassword(request.getPassword());
+        chatRoom.setCreatedBy(user);
 
-    return new ChatRoomResponseDTO(chatRoom);
-}
+        chatRoomRepository.save(chatRoom);
 
+        return new ChatRoomResponseDTO(chatRoom);
+    }
+
+    // GETTING LIST OF ALL ROOMS
     public List<ChatRoomResponseDTO> getAllRooms() {
         return chatRoomRepository.findAll().stream().map(chatRoomMapper::toDto).collect(Collectors.toList());
     }
     
-    
+    // JOINING ROOM
     public void joinRoom(Long roomId, String username, String password) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
         ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> new RoomNotFoundException(roomId));
@@ -60,6 +62,7 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
     }
 
+    // LEAVING ROOM
     public void leaveRoom(Long roomId, String username) {
         User user = userRepository.findByUsername(username)
                  .orElseThrow(() -> new UserNotFoundException(username));
@@ -75,14 +78,23 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
     }
     
+    // GETTING ROOM BY ID
+    public ChatRoomResponseDTO getRoomById(Long roomId, String username, String password) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RoomNotFoundException(roomId));
 
-    public ChatRoomResponseDTO getRoomById(Long id) {
-        ChatRoom chatRoom = chatRoomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ChatRoom not found with id: " + id));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+                
+        if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()
+                && !chatRoom.getUsers().contains(user)) {
+            throw new IncorrectPasswordException(password);
+        }        
 
         return chatRoomMapper.toDto(chatRoom);
     }
 
+    // DELETING ROOM
     public void deleteRoom(Long id) {
         if (!chatRoomRepository.existsById(id)) {
             throw new RuntimeException("Chatroom not found with id: " + id);

@@ -1,6 +1,5 @@
 package com.micnusz.chat.controller;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
-import com.micnusz.chat.model.ChatRoom;
-import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
 import com.micnusz.chat.service.ChatRoomService;
@@ -75,30 +72,29 @@ public class ChatRoomController {
     }
     
     
-    
+    //GETTING ALL ROOMS
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomResponseDTO>> getAllRooms() {
         return ResponseEntity.ok(chatRoomService.getAllRooms());
     }
 
+    //GETTING ROOM BY ID
     @GetMapping("/rooms/{id}")
     public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id, Authentication authentication) {
-        ChatRoom chatRoom = chatRoomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Chatroom not found with id: " + id));
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        String username = authentication.getName();
+        ChatRoomResponseDTO response = chatRoomService.getRoomById(id, username, username);
 
-        if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()
-                && !chatRoom.getUsers().contains(user)) {
-            return ResponseEntity.status(403).body(null);
-        }
-        return ResponseEntity.ok(chatRoomService.getRoomById(id));
+        return ResponseEntity.ok(response);
+
+        
     }
     
     @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId) {
-        List<MessageResponseDTO> dtos = messagesService.getMessagesByRoomAsDTO(roomId);
-        return ResponseEntity.ok(dtos != null ? dtos : Collections.emptyList());
+    public ResponseEntity<List<MessageResponseDTO>> getMessages(@PathVariable Long roomId, Authentication authentication) {
+        String username = authentication.getName();
+        List<MessageResponseDTO> response = messagesService.getMessagesByRoomAsDTO(roomId, username);
+        return ResponseEntity.ok(response);
     }
 
     
