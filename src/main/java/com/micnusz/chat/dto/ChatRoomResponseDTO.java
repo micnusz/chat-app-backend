@@ -13,15 +13,17 @@ public class ChatRoomResponseDTO {
     private boolean requiresPassword; 
     private String createdBy;
     private String createdAt;
+    private String slug;
 
     public ChatRoomResponseDTO() {}
 
-    public ChatRoomResponseDTO(Long id, String name, boolean requiresPassword, String createdBy, String createdAt) {
+    public ChatRoomResponseDTO(Long id, String name, boolean requiresPassword, String createdBy, String createdAt, String slug) {
         this.id = id;
         this.name = name;
         this.requiresPassword = requiresPassword;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
+        this.slug = slug;
     }
 
     public ChatRoomResponseDTO(ChatRoom room) {

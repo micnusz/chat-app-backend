@@ -3,6 +3,7 @@ package com.micnusz.chat.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.micnusz.chat.dto.MessageRequestDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
@@ -29,12 +30,17 @@ public class MessagesService {
     private final UserRepository userRepository;
 
 
-
+    @Transactional
     public MessageResponseDTO saveMessage(User sender, MessageRequestDTO requestDTO, ChatRoom room) {
-        if (!room.getUsers().contains(sender)) {
+        ChatRoom chatRoom = chatRoomRepository.findById(room.getId())
+            .orElseThrow(() -> new RoomNotFoundException(room.getId()));
+
+        boolean isMember = chatRoomRepository.existsByIdAndUsersId(chatRoom.getId(), sender.getId());
+        if (!isMember) {
             throw new AccessDeniedException(sender.getUsername());
         }
-        Message message = new Message(sender, requestDTO.getContent(), room);
+
+        Message message = new Message(sender, requestDTO.getContent(), chatRoom);
         Message saved = messagesRepository.save(message);
 
         return messagesMapper.toDto(saved);
@@ -42,19 +48,25 @@ public class MessagesService {
 
 
 
+
     public List<MessageResponseDTO> getMessagesByRoomAsDTO(Long roomId, String username) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException(roomId));
-            
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
 
-        if (!chatRoom.getUsers().contains(user)) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
+        boolean isMember = chatRoomRepository.existsByIdAndUsersId(chatRoom.getId(), user.getId());
+        if (!isMember) {
             throw new AccessDeniedException(username);
         }
 
-        return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId).stream().map(messagesMapper::toDto)
+        return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)
+                .stream()
+                .map(messagesMapper::toDto)
                 .toList();
-}
+    }
+
 
 
     

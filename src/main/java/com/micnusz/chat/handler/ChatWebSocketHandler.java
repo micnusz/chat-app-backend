@@ -1,10 +1,12 @@
 package com.micnusz.chat.handler;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -13,8 +15,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micnusz.chat.dto.MessageRequestDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
-import com.micnusz.chat.exception.RoomNotFoundException;
-import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
@@ -24,6 +24,7 @@ import com.micnusz.chat.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
+@Component
 @RequiredArgsConstructor
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
@@ -86,29 +87,38 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         try {
             String username = (String) session.getAttributes().get("username");
             if (username == null) {
-                session.sendMessage(new TextMessage("User not authenticated"));
+                sendError(session, "User not authenticated");
                 return;
             }
 
             User sender = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException(username));
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
             MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
+            Long roomId = requestDTO.getRoomId();
 
-            ChatRoom room = chatRoomRepository.findById(requestDTO.getRoomId())
-                    .orElseThrow(() -> new RoomNotFoundException(requestDTO.getRoomId()));
+            ChatRoom room = chatRoomRepository.findById(roomId)
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
 
-            if (!Optional.ofNullable(room.getUsers()).orElse(Collections.emptyList()).contains(sender)) {
-                session.sendMessage(new TextMessage("Access denied"));
+            // Sprawdzenie członkostwa użytkownika bez lazy loading
+            boolean isMember = chatRoomRepository.existsByIdAndUsersId(roomId, sender.getId());
+            if (!isMember) {
+                sendError(session, "Access denied");
                 return;
             }
 
             MessageResponseDTO responseDTO = messagesService.saveMessage(sender, requestDTO, room);
-            broadcastToRoom(room.getId(), responseDTO, session);
+            broadcastToRoom(roomId, responseDTO, session);
 
         } catch (Exception e) {
-            session.sendMessage(new TextMessage("Error: " + e.getMessage()));
+            sendError(session, e.getMessage());
         }
+    }
+
+    private void sendError(WebSocketSession session, String errorMsg) throws Exception {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", errorMsg);
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(error)));
     }
 
     @Override

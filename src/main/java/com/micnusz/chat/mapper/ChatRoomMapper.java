@@ -27,7 +27,15 @@ public class ChatRoomMapper {
     dto.setRequiresPassword(entity.getPassword() != null && !entity.getPassword().isEmpty());
     dto.setCreatedBy(entity.getCreatedBy() != null ? entity.getCreatedBy().getUsername() : null);
     dto.setCreatedAt(entity.getCreatedAt() != null ?
-        entity.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
+            entity.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null);
+    if (entity.getId() != null && entity.getName() != null) {
+        String slug = entity.getName().toLowerCase()
+                              .replaceAll("[^a-z0-9]+", "-")  
+                              .replaceAll("^-|-$", "");
+        dto.setSlug(slug + "-" + entity.getId());
+    } else {
+        dto.setSlug(null);
+    }
     return dto;
 }
 
