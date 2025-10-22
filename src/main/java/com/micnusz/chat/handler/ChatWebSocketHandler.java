@@ -15,6 +15,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.micnusz.chat.dto.MessageRequestDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
+import com.micnusz.chat.exception.RoomNotFoundException;
+import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
@@ -95,13 +97,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
 
             User sender = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new UserNotFoundException(username));
 
             MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
             Long roomId = requestDTO.getRoomId();
 
             ChatRoom room = chatRoomRepository.findById(roomId)
-                    .orElseThrow(() -> new RuntimeException("Room not found"));
+                    .orElseThrow(() -> new RoomNotFoundException(roomId));
 
             boolean isMember = chatRoomRepository.existsByIdAndUsersId(roomId, sender.getId());
             if (!isMember) {

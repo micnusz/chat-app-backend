@@ -16,6 +16,7 @@ import com.micnusz.chat.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -25,6 +26,7 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    // REGISTERING USER
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> registerUser(@RequestBody @Valid UserRequestDTO request) {
         UserResponseDTO response = userService.createUser(request);
@@ -32,12 +34,15 @@ public class UserController {
         return ResponseEntity.ok(new AuthResponseDTO(response, token));
     }
 
+    // LOGIN USER
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> loginUser(@RequestBody @Valid UserRequestDTO request) {
-            UserResponseDTO response = userService.loginUser(request.getUsername(), request.getPassword());
-            String token = jwtUtil.generateToken(response.getUsername());
-            return ResponseEntity.ok(new AuthResponseDTO(response, token));
-        
-    }
+        UserResponseDTO response = userService.loginUser(request.getUsername(), request.getPassword());
+        String token = jwtUtil.generateToken(response.getUsername());
+        return ResponseEntity.ok(new AuthResponseDTO(response, token));
 
+    }
+    
 }
+
+
