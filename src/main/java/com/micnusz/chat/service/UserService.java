@@ -3,9 +3,11 @@ package com.micnusz.chat.service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.micnusz.chat.dto.UserRequestDTO;
 import com.micnusz.chat.dto.UserResponseDTO;
+import com.micnusz.chat.exception.IncorrectPasswordException;
 import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.exception.UsernameAlreadyExistsException;
 import com.micnusz.chat.mapper.UserMapper;
@@ -23,6 +25,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // CREATING USER
+    @Transactional
     public UserResponseDTO createUser(UserRequestDTO request) {
         userRepository.findByUsername(request.getUsername())
                 .ifPresent(u -> { throw new UsernameAlreadyExistsException(request.getUsername()); });
@@ -40,7 +43,7 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(username));
 
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new IncorrectPasswordException(rawPassword);
         }
 
         return userMapper.toDto(user);

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
@@ -28,6 +29,7 @@ public class ChatRoomService {
     private final ChatRoomMapper chatRoomMapper;
 
     // CREATING ROOM
+    @Transactional
     public ChatRoomResponseDTO createRoom(ChatRoomRequestDTO request, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
