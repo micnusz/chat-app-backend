@@ -62,19 +62,22 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             session.getAttributes().put("username", username);
             session.getAttributes().put("roomId", roomId);
 
-            boolean alreadyConnected = sessions.stream()
-                    .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
-                                   username.equals(s.getAttributes().get("username")));
+        boolean alreadyConnected = sessions.stream()
+                .filter(s -> s.isOpen())
+                .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
+                            username.equals(s.getAttributes().get("username")));
 
-            sessions.add(session);
+        sessions.add(session);
 
-            if (!alreadyConnected) {
-                MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
-                systemJoinMsg.setContent(username + " joined the chat");
-                systemJoinMsg.setRoomId(roomId);
-                systemJoinMsg.setUsername("System");
-                broadcastToRoom(roomId, systemJoinMsg, session);
-            }
+        if (!alreadyConnected) {
+            MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
+            systemJoinMsg.setContent(username + " joined the chat");
+            systemJoinMsg.setRoomId(roomId);
+            systemJoinMsg.setUsername("System");
+            broadcastToRoom(roomId, systemJoinMsg, session);
+        }
+
+
 
             System.out.println("Connected: " + session.getId() + " as " + username + " in room " + roomId);
         } catch (Exception e) {
@@ -100,7 +103,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             ChatRoom room = chatRoomRepository.findById(roomId)
                     .orElseThrow(() -> new RuntimeException("Room not found"));
 
-            // Sprawdzenie członkostwa użytkownika bez lazy loading
             boolean isMember = chatRoomRepository.existsByIdAndUsersId(roomId, sender.getId());
             if (!isMember) {
                 sendError(session, "Access denied");
