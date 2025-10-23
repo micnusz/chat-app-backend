@@ -30,6 +30,7 @@ public class MessagesService {
     private final UserRepository userRepository;
 
 
+    // SAVE MESSAGES
     @Transactional
     public MessageResponseDTO saveMessage(User sender, MessageRequestDTO requestDTO, ChatRoom room) {
         ChatRoom chatRoom = chatRoomRepository.findById(room.getId())
@@ -48,7 +49,7 @@ public class MessagesService {
 
 
 
-
+    // GETTING MESSAGES
     public List<MessageResponseDTO> getMessagesByRoomAsDTO(Long roomId, String username) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException(roomId));

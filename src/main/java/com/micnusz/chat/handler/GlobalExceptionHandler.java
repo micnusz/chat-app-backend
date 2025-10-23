@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.micnusz.chat.dto.ErrorResponseDTO;
 import com.micnusz.chat.exception.AccessDeniedException;
 import com.micnusz.chat.exception.IncorrectPasswordException;
+import com.micnusz.chat.exception.RoomFullException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.exception.UserNotInRoomException;
@@ -56,7 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IncorrectPasswordException.class)
     public ResponseEntity<ErrorResponseDTO> handleIncorrectPassword(IncorrectPasswordException ex, HttpServletRequest req) {
-        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        HttpStatus status = HttpStatus.FORBIDDEN;
         return ResponseEntity.status(status).body(buildError(status, ex.getMessage(), req.getRequestURI()));
     }
 
@@ -76,5 +77,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleGeneric(Exception ex, HttpServletRequest req) {
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(status).body(buildError(status, "Internal server error", req.getRequestURI()));
+    }
+
+    @ExceptionHandler(RoomFullException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRoomFull(RoomFullException exception, HttpServletRequest req) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        return ResponseEntity.status(status).body(buildError(status, exception.getMessage(), req.getRequestURI()));
     }
 }

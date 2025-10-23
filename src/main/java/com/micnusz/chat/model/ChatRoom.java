@@ -54,6 +54,9 @@ public class ChatRoom {
     )
     private List<User> users = new ArrayList<>();
 
+    @Column(nullable = false)
+    private Integer maxUsers = 1;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
