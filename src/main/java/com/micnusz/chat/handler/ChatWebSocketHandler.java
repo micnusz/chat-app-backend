@@ -21,6 +21,7 @@ import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
+import com.micnusz.chat.service.MessagesEncryptionService;
 import com.micnusz.chat.service.MessagesService;
 import com.micnusz.chat.util.JwtUtil;
 
@@ -36,6 +37,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ObjectMapper objectMapper;
+    private final MessagesEncryptionService messagesEncryptionService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -88,36 +90,46 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage wsMessage) throws Exception {
-        try {
-            String username = (String) session.getAttributes().get("username");
-            if (username == null) {
-                sendError(session, "User not authenticated");
-                return;
-            }
-
-            User sender = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException(username));
-
-            MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
-            Long roomId = requestDTO.getRoomId();
-
-            ChatRoom room = chatRoomRepository.findById(roomId)
-                    .orElseThrow(() -> new RoomNotFoundException(roomId));
-
-            boolean isMember = chatRoomRepository.existsByIdAndUsersId(roomId, sender.getId());
-            if (!isMember) {
-                sendError(session, "Access denied");
-                return;
-            }
-
-            MessageResponseDTO responseDTO = messagesService.saveMessage(sender, requestDTO, room);
-            broadcastToRoom(roomId, responseDTO, session);
-
-        } catch (Exception e) {
-            sendError(session, e.getMessage());
+protected void handleTextMessage(WebSocketSession session, TextMessage wsMessage) throws Exception {
+    try {
+        String username = (String) session.getAttributes().get("username");
+        if (username == null) {
+            sendError(session, "User not authenticated");
+            return;
         }
+
+        User sender = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
+        MessageRequestDTO requestDTO = objectMapper.readValue(wsMessage.getPayload(), MessageRequestDTO.class);
+        Long roomId = requestDTO.getRoomId();
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new RoomNotFoundException(roomId));
+
+        boolean isMember = chatRoomRepository.existsByIdAndUsersId(roomId, sender.getId());
+        if (!isMember) {
+            sendError(session, "Access denied");
+            return;
+        }
+
+        // Szyfrowanie
+        String encryptedContent = messagesEncryptionService.encrypt(requestDTO.getContent());
+        requestDTO.setContent(encryptedContent);
+
+        // Zapis do bazy
+        MessageResponseDTO responseDTO = messagesService.saveMessage(sender, requestDTO, room);
+
+        // Odszyfrowanie przed wysłaniem do klienta
+        responseDTO.setContent(messagesEncryptionService.decrypt(responseDTO.getContent()));
+
+        broadcastToRoom(roomId, responseDTO, session);
+
+    } catch (Exception e) {
+        sendError(session, e.getMessage());
     }
+}
+
 
     private void sendError(WebSocketSession session, String errorMsg) throws Exception {
         Map<String, String> error = new HashMap<>();

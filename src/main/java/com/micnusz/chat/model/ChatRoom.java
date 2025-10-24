@@ -55,7 +55,7 @@ public class ChatRoom {
     private List<User> users = new ArrayList<>();
 
     @Column(nullable = false)
-    private Integer maxUsers = 1;
+    private Integer maxUsers = 15;
 
     @PrePersist
     protected void onCreate() {

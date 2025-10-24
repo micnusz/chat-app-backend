@@ -28,6 +28,7 @@ public class MessagesService {
     private final MessagesMapper messagesMapper;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final MessagesEncryptionService messagesEncryptionService;
 
 
     // SAVE MESSAGES
@@ -41,7 +42,9 @@ public class MessagesService {
             throw new AccessDeniedException(sender.getUsername());
         }
 
-        Message message = new Message(sender, requestDTO.getContent(), chatRoom);
+        String encryptedContent = messagesEncryptionService.encrypt(requestDTO.getContent());
+
+        Message message = new Message(sender, encryptedContent, chatRoom);
         Message saved = messagesRepository.save(message);
 
         return messagesMapper.toDto(saved);
@@ -62,9 +65,13 @@ public class MessagesService {
             throw new AccessDeniedException(username);
         }
 
-        return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)
+         return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)
                 .stream()
-                .map(messagesMapper::toDto)
+                .map(msg -> {
+                    String decryptedContent = messagesEncryptionService.decrypt(msg.getContent());
+                    msg.setContent(decryptedContent);
+                    return messagesMapper.toDto(msg);
+                })
                 .toList();
     }
 
