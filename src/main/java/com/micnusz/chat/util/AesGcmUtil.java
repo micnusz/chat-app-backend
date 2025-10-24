@@ -29,21 +29,22 @@ public class AesGcmUtil {
 
     // Encrypt plain text
     public static String encrypt(String plainText, SecretKey secretKey) throws Exception {
-        byte[] iv = new byte[IV_SIZE];
-        secureRandom.nextBytes(iv);
+    byte[] iv = new byte[IV_SIZE];
+    secureRandom.nextBytes(iv);
 
-        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(IV_SIZE, iv);
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmParameterSpec);
+    Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+    GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(TAG_SIZE, iv); 
+    cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmParameterSpec);
 
-        byte[] cipherText = cipher.doFinal(plainText.getBytes());
-        byte[] cipherWithIv = new byte[iv.length + cipherText.length];
+    byte[] cipherText = cipher.doFinal(plainText.getBytes());
+    byte[] cipherWithIv = new byte[iv.length + cipherText.length];
 
-        System.arraycopy(iv, 0, cipherWithIv, 0, iv.length);
-        System.arraycopy(cipherText, 0, cipherWithIv, iv.length, cipherText.length);
+    System.arraycopy(iv, 0, cipherWithIv, 0, iv.length);
+    System.arraycopy(cipherText, 0, cipherWithIv, iv.length, cipherText.length);
 
-        return Base64.getEncoder().encodeToString(cipherWithIv);
-    }
+    return Base64.getEncoder().encodeToString(cipherWithIv);
+}
+
     // Decrypt ciphertext
     public static String decrypt(String cipherTextBase64, SecretKey key) throws Exception {
         byte[] cipherWithIv = Base64.getDecoder().decode(cipherTextBase64);

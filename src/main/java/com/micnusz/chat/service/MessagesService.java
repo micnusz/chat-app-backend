@@ -30,7 +30,6 @@ public class MessagesService {
     private final UserRepository userRepository;
     private final MessagesEncryptionService messagesEncryptionService;
 
-
     // SAVE MESSAGES
     @Transactional
     public MessageResponseDTO saveMessage(User sender, MessageRequestDTO requestDTO, ChatRoom room) {
@@ -42,15 +41,20 @@ public class MessagesService {
             throw new AccessDeniedException(sender.getUsername());
         }
 
-        String encryptedContent = messagesEncryptionService.encrypt(requestDTO.getContent());
+        String encryptedContent;
+        try {
+            encryptedContent = messagesEncryptionService.encrypt(requestDTO.getContent());
+        } catch (Exception e) {
+            // fallback do plaintext, aby zapis nie zawiódł
+            System.err.println("Encryption failed: " + e.getMessage());
+            encryptedContent = requestDTO.getContent();
+        }
 
         Message message = new Message(sender, encryptedContent, chatRoom);
         Message saved = messagesRepository.save(message);
 
         return messagesMapper.toDto(saved);
     }
-
-
 
     // GETTING MESSAGES
     public List<MessageResponseDTO> getMessagesByRoomAsDTO(Long roomId, String username) {
@@ -65,17 +69,19 @@ public class MessagesService {
             throw new AccessDeniedException(username);
         }
 
-         return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)
+        return messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)
                 .stream()
                 .map(msg -> {
-                    String decryptedContent = messagesEncryptionService.decrypt(msg.getContent());
+                    String decryptedContent;
+                    try {
+                        decryptedContent = messagesEncryptionService.decrypt(msg.getContent());
+                    } catch (Exception e) {
+                        System.err.println("Decryption failed for message id " + msg.getId() + ": " + e.getMessage());
+                        decryptedContent = msg.getContent(); // fallback do plaintext
+                    }
                     msg.setContent(decryptedContent);
                     return messagesMapper.toDto(msg);
                 })
                 .toList();
     }
-
-
-
-    
 }
