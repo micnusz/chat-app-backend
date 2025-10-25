@@ -21,6 +21,7 @@ import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
 import com.micnusz.chat.repository.UserRepository;
+import com.micnusz.chat.service.MessagesEncryptionService;
 import com.micnusz.chat.service.MessagesService;
 import com.micnusz.chat.util.JwtUtil;
 
@@ -36,6 +37,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ObjectMapper objectMapper;
+    private final MessagesEncryptionService messagesEncryptionService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -114,11 +116,16 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             
             MessageResponseDTO responseDTO = messagesService.saveMessage(sender, requestDTO, room);
 
-        
+            try {
+                String decrypted = messagesEncryptionService.decrypt(responseDTO.getContent());
+                responseDTO.setContent(decrypted);
+            } catch (Exception exception) {
+                sendError(session, exception.getMessage());
+            }
             broadcastToRoom(roomId, responseDTO, session);
 
-        } catch (Exception e) {
-            sendError(session, e.getMessage());
+        } catch (Exception exception) {
+            sendError(session, exception.getMessage());
         }
     }
 
