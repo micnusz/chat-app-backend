@@ -21,7 +21,6 @@ public class MessagesEncryptionService {
 
     public String encrypt(String message) {
         try {
-            // Poprawka: GCMParameterSpec w AesGcmUtil używa TAG_SIZE zamiast IV_SIZE
             return AesGcmUtil.encrypt(message, secretKey);
         } catch (Exception e) {
             throw new RuntimeException("Failed to encrypt message", e);

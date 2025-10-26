@@ -3,6 +3,7 @@ package com.micnusz.chat.handler;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,15 +46,19 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             String path = session.getUri().getPath();
             String[] segments = path.split("/");
             Long roomId = Long.parseLong(segments[segments.length - 1]);
-
+            
             String token = null;
-            String query = session.getUri().getQuery();
-            if (query != null) {
-                for (String param : query.split("&")) {
-                    if (param.startsWith("token=")) {
-                        token = param.substring(6);
-                        break;
+            List<String> cookies = session.getHandshakeHeaders().get("cookie");
+            if (cookies != null) {
+                for (String cookieHeader : cookies) {
+                    for (String c : cookieHeader.split(";")) {
+                        String[] parts = c.trim().split("=");
+                        if (parts.length == 2 && "accessToken".equals(parts[0])) {
+                            token = parts[1];
+                            break;
+                        }
                     }
+                    if (token != null) break;
                 }
             }
 
@@ -66,22 +71,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             session.getAttributes().put("username", username);
             session.getAttributes().put("roomId", roomId);
 
-        boolean alreadyConnected = sessions.stream()
-                .filter(s -> s.isOpen())
-                .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
-                            username.equals(s.getAttributes().get("username")));
+            boolean alreadyConnected = sessions.stream()
+                    .filter(s -> s.isOpen())
+                    .anyMatch(s -> roomId.equals(s.getAttributes().get("roomId")) &&
+                                username.equals(s.getAttributes().get("username")));
 
-        sessions.add(session);
+            sessions.add(session);
 
-        if (!alreadyConnected) {
-            MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
-            systemJoinMsg.setContent(username + " joined the chat");
-            systemJoinMsg.setRoomId(roomId);
-            systemJoinMsg.setUsername("System");
-            broadcastToRoom(roomId, systemJoinMsg, session);
-        }
-
-
+            if (!alreadyConnected) {
+                MessageResponseDTO systemJoinMsg = new MessageResponseDTO();
+                systemJoinMsg.setContent(username + " joined the chat");
+                systemJoinMsg.setRoomId(roomId);
+                systemJoinMsg.setUsername("System");
+                broadcastToRoom(roomId, systemJoinMsg, session);
+            }
 
             System.out.println("Connected: " + session.getId() + " as " + username + " in room " + roomId);
         } catch (Exception e) {
@@ -113,7 +116,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            
             MessageResponseDTO responseDTO = messagesService.saveMessage(sender, requestDTO, room);
 
             try {
@@ -128,9 +130,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             sendError(session, exception.getMessage());
         }
     }
-
-
-
 
     private void sendError(WebSocketSession session, String errorMsg) throws Exception {
         Map<String, String> error = new HashMap<>();
