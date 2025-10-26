@@ -51,7 +51,7 @@ public class RateLimitFilter implements Filter {
 
         Bucket bucket;
         if (path.equals("/api/users/register")) {
-            bucket = resolveBucket(ip + ":register", 3, Duration.ofMinutes(10)); // 3 req / 10 min
+            bucket = resolveBucket(ip + ":register", 5, Duration.ofMinutes(10)); // 3 req / 10 min
         } else { // login
             bucket = resolveBucket(ip + ":login", 10, Duration.ofMinutes(1)); // 10 req / 1 min
         }

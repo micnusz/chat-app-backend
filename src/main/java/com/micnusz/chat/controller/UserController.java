@@ -72,8 +72,8 @@ public class UserController {
         String token = jwtUtil.generateToken(username, ACCESS_TOKEN_EXP);
         ResponseCookie cookie = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
-                .secure(false) // dev localhost
-                .sameSite("Lax")
+                .secure(true) // dev localhost
+                .sameSite("None")
                 .path("/")      
                 .maxAge(ACCESS_TOKEN_EXP / 1000)
                 .build();
@@ -84,8 +84,8 @@ public class UserController {
         String token = jwtUtil.generateToken(username, REFRESH_TOKEN_EXP);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(false) // dev
-                .sameSite("Lax")
+                .secure(true) // dev
+                .sameSite("None")
                 .path("/")      
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
