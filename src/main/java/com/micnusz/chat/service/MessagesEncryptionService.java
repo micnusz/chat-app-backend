@@ -13,9 +13,13 @@ public class MessagesEncryptionService {
 
     public MessagesEncryptionService() {
         try {
-            this.secretKey = AesGcmUtil.generateKey();
+            String base64Key = System.getenv("AES_KEY");
+            if (base64Key == null || base64Key.isEmpty()) {
+                throw new RuntimeException("AES_KEY environment variable not set!");
+            }
+            this.secretKey = AesGcmUtil.keyFromBase64(base64Key);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate AES key", e);
+            throw new RuntimeException("Failed to initialize AES key", e);
         }
     }
 
