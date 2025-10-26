@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials="true")
+@CrossOrigin(origins = "https://micnusz-chatapp.vercel.app", allowCredentials="true")
 @RequiredArgsConstructor
 public class UserController {
 
