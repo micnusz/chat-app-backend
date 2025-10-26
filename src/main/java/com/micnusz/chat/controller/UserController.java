@@ -78,13 +78,12 @@ public class UserController {
     private void setAccessToken(HttpServletResponse response, String username) {
         String token = jwtUtil.generateToken(username, ACCESS_TOKEN_EXP);
         ResponseCookie cookie = ResponseCookie.from("accessToken", token)
-                .httpOnly(true)
-                .secure(true) // dev localhost
-                .sameSite("None")
-                .path("/")
-                .domain("micnusz-chatapp.vercel.app")  
-                .maxAge(ACCESS_TOKEN_EXP / 1000)
-                .build();
+            .httpOnly(true)
+            .secure(true) 
+            .sameSite("None")
+            .path("/")
+            .maxAge(ACCESS_TOKEN_EXP / 1000)
+            .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }
 
@@ -95,7 +94,6 @@ public class UserController {
                 .secure(true) // dev
                 .sameSite("None")
                 .path("/")
-                .domain("micnusz-chatapp.vercel.app")  
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
