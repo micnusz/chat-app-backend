@@ -19,7 +19,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials="true")
@@ -49,14 +48,14 @@ public class UserController {
 
     @PostMapping("/refresh")
     public ResponseEntity<Void> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken,
-            HttpServletResponse response) {
+                                             HttpServletResponse response) {
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken))
             return ResponseEntity.status(401).build();
         String username = jwtUtil.extractUsername(refreshToken);
         setAccessToken(response, username);
         return ResponseEntity.ok().build();
     }
-    
+
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCurrentUser() {
         UserResponseDTO user = userService.returnCurrentUser();
@@ -73,27 +72,23 @@ public class UserController {
         String token = jwtUtil.generateToken(username, ACCESS_TOKEN_EXP);
         ResponseCookie cookie = ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path("/")
+                .secure(false) // dev localhost
+                .sameSite("Lax")
+                .path("/")      
                 .maxAge(ACCESS_TOKEN_EXP / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }
-    
+
     private void setRefreshToken(HttpServletResponse response, String username) {
         String token = jwtUtil.generateToken(username, REFRESH_TOKEN_EXP);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path("/api/users/refresh")
+                .secure(false) // dev
+                .sameSite("Lax")
+                .path("/")      
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }
-
-    
 }
-
-
