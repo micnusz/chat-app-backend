@@ -41,7 +41,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
             "http://localhost:3000",      // dev
-            "https://micnusz-chatapp.vercel.app/"        // prod
+            "https://micnusz-chatapp.vercel.app"        // prod
         ));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
