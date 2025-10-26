@@ -53,11 +53,22 @@ public class UserService {
     // RETURN USER
     public UserResponseDTO returnCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof User user) {
+
+        if (principal instanceof String username) {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException(username));
             return userMapper.toDto(user);
         }
-        return null; 
+
+        return null;
     }
+    
+    public UserResponseDTO returnUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new UserNotFoundException(username));
+        return userMapper.toDto(user);
+    }
+
     
     
     

@@ -28,7 +28,7 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    private static final long ACCESS_TOKEN_EXP = 5 * 60 * 1000; // 5 min
+    private static final long ACCESS_TOKEN_EXP = 15 * 60 * 1000; // 5 min
     private static final long REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     @PostMapping("/register")
@@ -47,14 +47,21 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<Void> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshToken,
-                                             HttpServletResponse response) {
-        if (refreshToken == null || !jwtUtil.validateToken(refreshToken))
+    public ResponseEntity<UserResponseDTO> refreshToken(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+
+        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
             return ResponseEntity.status(401).build();
+        }
+
         String username = jwtUtil.extractUsername(refreshToken);
         setAccessToken(response, username);
-        return ResponseEntity.ok().build();
+
+        UserResponseDTO user = userService.returnUserByUsername(username);
+        return ResponseEntity.ok(user);
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCurrentUser() {
@@ -74,7 +81,8 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) // dev localhost
                 .sameSite("None")
-                .path("/")      
+                .path("/")
+                .domain("micnusz-chatapp.vercel.app")  
                 .maxAge(ACCESS_TOKEN_EXP / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -86,7 +94,8 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) // dev
                 .sameSite("None")
-                .path("/")      
+                .path("/")
+                .domain("micnusz-chatapp.vercel.app")  
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
