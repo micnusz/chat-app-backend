@@ -1,6 +1,8 @@
 package com.micnusz.chat.service;
 
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,13 +21,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
-    
+public class UserService implements UserDetailsService {
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    // CREATING USER
+    // CREATE USER
     @Transactional
     public UserResponseDTO createUser(UserRequestDTO request) {
         userRepository.findByUsername(request.getUsername())
@@ -50,27 +52,41 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    // RETURN USER
+    // USED BY SPRING SECURITY (JWT FILTER)
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
+
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities("USER") // lub z encji jeśli masz role
+                .build();
+    }
+
+    // RETURN CURRENT USER BASED ON CONTEXT
     public UserResponseDTO returnCurrentUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+            String username = userDetails.getUsername();
+            return returnUserByUsername(username);
+        }
 
         if (principal instanceof String username) {
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException(username));
-            return userMapper.toDto(user);
+            return returnUserByUsername(username);
         }
 
         return null;
     }
-    
+
     public UserResponseDTO returnUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new UserNotFoundException(username));
+                .orElseThrow(() -> new UserNotFoundException(username));
         return userMapper.toDto(user);
     }
-
-    
-    
-    
-    
 }
