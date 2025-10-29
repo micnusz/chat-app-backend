@@ -53,12 +53,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-            "http://localhost:3000", // dev
-            "https://micnusz-chatapp.vercel.app" // prod
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:3000",
+            "https://micnusz-chatapp.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+        config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Set-Cookie"));
         config.setAllowCredentials(true);
 
@@ -66,4 +66,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
