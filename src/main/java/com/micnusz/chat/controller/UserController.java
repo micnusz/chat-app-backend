@@ -44,6 +44,31 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logoutUser(HttpServletResponse response) {
+        ResponseCookie access = ResponseCookie.from("accessToken", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .maxAge(0)
+                .build();
+
+        ResponseCookie refresh = ResponseCookie.from("refreshToken", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", access.toString());
+        response.addHeader("Set-Cookie", refresh.toString());
+
+        return ResponseEntity.ok().build();
+    }
+
+
     @PostMapping("/refresh")
     public ResponseEntity<UserResponseDTO> refreshToken(
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
