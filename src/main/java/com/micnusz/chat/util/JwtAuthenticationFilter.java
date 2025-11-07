@@ -28,12 +28,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
-                                    throws ServletException, IOException {
+            throws ServletException, IOException {
 
         String token = extractToken(request);
 
         try {
-            if (token != null && jwtUtil.validateToken(token)) {
+            if (token != null) {
+
+                if (!jwtUtil.validateToken(token)) {
+                    // TOKEN IS EXPIRED OR INVALID -> RETURN 401
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
                 String username = jwtUtil.extractUsername(token);
                 UserDetails userDetails = userService.loadUserByUsername(username);
 
@@ -44,15 +51,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 userDetails.getAuthorities());
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } else {
-                SecurityContextHolder.clearContext();
             }
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
 
         filterChain.doFilter(request, response);
     }
+
 
     private String extractToken(HttpServletRequest request) {
         if (request.getCookies() != null) {
