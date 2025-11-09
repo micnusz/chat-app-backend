@@ -51,7 +51,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
-                .domain("micnusz.xyz") 
+                .domain(".micnusz.xyz") 
                 .maxAge(0)
                 .build();
 
@@ -60,7 +60,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
-                .domain("micnusz.xyz") 
+                .domain(".micnusz.xyz") 
                 .maxAge(0)
                 .build();
 
@@ -106,7 +106,7 @@ public class UserController {
             .httpOnly(true)
             .secure(true) 
             .sameSite("None")
-            .domain("micnusz.xyz") 
+            .domain(".micnusz.xyz") 
             .path("/")
             .maxAge(ACCESS_TOKEN_EXP / 1000)
             .build();
@@ -119,7 +119,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) 
                 .sameSite("None")
-                .domain("micnusz.xyz") 
+                .domain(".micnusz.xyz") 
                 .path("/")
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
