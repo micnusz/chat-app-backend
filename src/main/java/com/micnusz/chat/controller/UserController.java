@@ -26,7 +26,7 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    private static final long ACCESS_TOKEN_EXP = 15 * 60 * 1000; // 15 min
+    private static final long ACCESS_TOKEN_EXP = 30 * 60 * 1000; // 15 min
     private static final long REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     @PostMapping("/register")
@@ -51,6 +51,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
+                .domain("micnusz.xyz")
                 .maxAge(0)
                 .build();
 
@@ -59,6 +60,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
+                .domain("micnusz.xyz")
                 .maxAge(0)
                 .build();
 
@@ -104,6 +106,7 @@ public class UserController {
             .httpOnly(true)
             .secure(true) 
             .sameSite("None")
+            .domain("micnusz.xyz")
             .path("/")
             .maxAge(ACCESS_TOKEN_EXP / 1000)
             .build();
@@ -116,6 +119,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) 
                 .sameSite("None")
+                .domain("micnusz.xyz")
                 .path("/")
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();

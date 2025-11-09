@@ -21,8 +21,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(chatWebSocketHandler, "/chat/**")
                 .setAllowedOrigins(
-                    "http://localhost:3000", 
-                    "https://micnusz-chatapp.vercel.app"
+                    "https://chatapp.micnusz.xyz",
+                    "http://localhost:3000"
                 );
     }
 }

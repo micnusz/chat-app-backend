@@ -36,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token != null) {
 
                 if (!jwtUtil.validateToken(token)) {
-                    // TOKEN IS EXPIRED OR INVALID -> RETURN 401
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
