@@ -26,7 +26,7 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    private static final long ACCESS_TOKEN_EXP = 30 * 60 * 1000; // 30 min
+    private static final long ACCESS_TOKEN_EXP = 15 * 60 * 1000; // 15 min
     private static final long REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     @PostMapping("/register")
@@ -74,13 +74,23 @@ public class UserController {
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response) {
 
+        System.out.println("Received refresh token: " + refreshToken); //log
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
+            System.out.println("Refresh token is null!"); //log
+            return ResponseEntity.status(401).build();
+        }
+
+        boolean valid = jwtUtil.validateToken(refreshToken); //log
+        System.out.println("Token valid? " + valid);
+        if (!valid) {
+            System.out.println("Refresh token invalid!");
             return ResponseEntity.status(401).build();
         }
 
         String username = jwtUtil.extractUsername(refreshToken);
-        setAccessToken(response, username);
+        System.out.println("Token username: " + username); //log
 
+        setAccessToken(response, username);
         UserResponseDTO user = userService.returnUserByUsername(username);
         return ResponseEntity.ok(user);
     }
