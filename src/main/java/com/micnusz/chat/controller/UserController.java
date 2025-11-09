@@ -51,6 +51,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
+                .domain("micnusz.xyz") 
                 .maxAge(0)
                 .build();
 
@@ -59,6 +60,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
+                .domain("micnusz.xyz") 
                 .maxAge(0)
                 .build();
 
@@ -74,21 +76,11 @@ public class UserController {
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response) {
 
-        System.out.println("Received refresh token: " + refreshToken); //log
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
-            System.out.println("Refresh token is null!"); //log
-            return ResponseEntity.status(401).build();
-        }
-
-        boolean valid = jwtUtil.validateToken(refreshToken); //log
-        System.out.println("Token valid? " + valid);
-        if (!valid) {
-            System.out.println("Refresh token invalid!");
             return ResponseEntity.status(401).build();
         }
 
         String username = jwtUtil.extractUsername(refreshToken);
-        System.out.println("Token username: " + username); //log
 
         setAccessToken(response, username);
         UserResponseDTO user = userService.returnUserByUsername(username);
@@ -114,6 +106,7 @@ public class UserController {
             .httpOnly(true)
             .secure(true) 
             .sameSite("None")
+            .domain("micnusz.xyz") 
             .path("/")
             .maxAge(ACCESS_TOKEN_EXP / 1000)
             .build();
@@ -126,6 +119,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) 
                 .sameSite("None")
+                .domain("micnusz.xyz") 
                 .path("/")
                 .maxAge(REFRESH_TOKEN_EXP / 1000)
                 .build();
