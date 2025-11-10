@@ -62,10 +62,6 @@ public class ChatRoomService {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
         ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> new RoomNotFoundException(roomId));
 
-        if (chatRoomRepository.existsByIdAndUsersId(roomId, user.getId())) {
-            throw new RuntimeException("User is already in the room");
-        }
-
         // password validation
         if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()) {
             if (password == null || !password.equals(chatRoom.getPassword())) {
