@@ -57,9 +57,14 @@ public class ChatRoomService {
     }
     
     // JOINING ROOM
+    @Transactional
     public void joinRoom(Long roomId, String username, String password) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
         ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow(() -> new RoomNotFoundException(roomId));
+
+        if (chatRoomRepository.existsByIdAndUsersId(roomId, user.getId())) {
+            throw new RuntimeException("User is already in the room");
+        }
 
         // password validation
         if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()) {
@@ -80,6 +85,7 @@ public class ChatRoomService {
     }
 
     // LEAVING ROOM
+    @Transactional
     public void leaveRoom(Long roomId, String username) {
         User user = userRepository.findByUsername(username)
                  .orElseThrow(() -> new UserNotFoundException(username));
@@ -96,17 +102,16 @@ public class ChatRoomService {
     }
     
     // GETTING ROOM BY ID
-    public ChatRoomResponseDTO getRoomById(Long roomId, String username, String password) {
+    public ChatRoomResponseDTO getRoomById(Long roomId, String username) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException(roomId));
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(username));
                 
-        if (chatRoom.getPassword() != null && !chatRoom.getPassword().isEmpty()
-                && !chatRoom.getUsers().contains(user)) {
-            throw new IncorrectPasswordException(password);
-        }        
+        if (!chatRoom.getUsers().contains(user)) {
+            throw new UserNotInRoomException(username, roomId);
+        }      
 
         return chatRoomMapper.toDto(chatRoom);
     }

@@ -45,7 +45,6 @@ public class MessagesService {
         try {
             encryptedContent = messagesEncryptionService.encrypt(requestDTO.getContent());
         } catch (Exception e) {
-            // fallback do plaintext, aby zapis nie zawiódł
             System.err.println("Encryption failed: " + e.getMessage());
             encryptedContent = requestDTO.getContent();
         }
@@ -77,7 +76,7 @@ public class MessagesService {
                         decryptedContent = messagesEncryptionService.decrypt(msg.getContent());
                     } catch (Exception e) {
                         System.err.println("Decryption failed for message id " + msg.getId() + ": " + e.getMessage());
-                        decryptedContent = msg.getContent(); // fallback do plaintext
+                        decryptedContent = msg.getContent();
                     }
                     msg.setContent(decryptedContent);
                     return messagesMapper.toDto(msg);

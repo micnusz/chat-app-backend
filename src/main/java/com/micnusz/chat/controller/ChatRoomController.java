@@ -79,7 +79,7 @@ public class ChatRoomController {
     public ResponseEntity<ChatRoomResponseDTO> getRoomById(@PathVariable Long id, Authentication authentication) {
 
         String username = authentication.getName();
-        ChatRoomResponseDTO response = chatRoomService.getRoomById(id, username, username);
+        ChatRoomResponseDTO response = chatRoomService.getRoomById(id, username);
 
         return ResponseEntity.ok(response);
 

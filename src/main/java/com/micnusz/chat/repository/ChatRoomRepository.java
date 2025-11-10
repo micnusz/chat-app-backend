@@ -7,7 +7,6 @@ import com.micnusz.chat.model.User;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     boolean existsByIdAndUsersId(Long roomId, Long userId);
-
     int countByCreatedBy(User user);
     
 }
