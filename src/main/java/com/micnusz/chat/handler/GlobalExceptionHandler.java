@@ -92,10 +92,4 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
         return ResponseEntity.status(status).body(buildError(status, exception.getMessage(), req.getRequestURI()));
     }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponseDTO> handleAccesDenied(AccessDeniedException exception, HttpServletRequest req) {
-        HttpStatus status = HttpStatus.FORBIDDEN;
-        return ResponseEntity.status(status).body(buildError(status, exception.getMessage(), req.getRequestURI()));
-    }
 }
