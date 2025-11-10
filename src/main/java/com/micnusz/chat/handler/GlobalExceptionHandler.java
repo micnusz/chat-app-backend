@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.micnusz.chat.dto.ErrorResponseDTO;
 import com.micnusz.chat.exception.AccessDeniedException;
 import com.micnusz.chat.exception.IncorrectPasswordException;
+import com.micnusz.chat.exception.MaxRoomsCreatedByUserException;
 import com.micnusz.chat.exception.RoomFullException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
@@ -82,6 +83,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RoomFullException.class)
     public ResponseEntity<ErrorResponseDTO> handleRoomFull(RoomFullException exception, HttpServletRequest req) {
         HttpStatus status = HttpStatus.FORBIDDEN;
+        return ResponseEntity.status(status).body(buildError(status, exception.getMessage(), req.getRequestURI()));
+    }
+
+    @ExceptionHandler(MaxRoomsCreatedByUserException.class) 
+    public ResponseEntity<ErrorResponseDTO> handleMaxRoomsCreated(MaxRoomsCreatedByUserException exception,
+            HttpServletRequest req) {
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
         return ResponseEntity.status(status).body(buildError(status, exception.getMessage(), req.getRequestURI()));
     }
 }

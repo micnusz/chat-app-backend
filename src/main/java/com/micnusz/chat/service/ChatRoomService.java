@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.exception.IncorrectPasswordException;
+import com.micnusz.chat.exception.MaxRoomsCreatedByUserException;
 import com.micnusz.chat.exception.RoomFullException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
@@ -33,7 +34,12 @@ public class ChatRoomService {
     @Transactional
     public ChatRoomResponseDTO createRoom(ChatRoomRequestDTO request, String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+                 .orElseThrow(() -> new UserNotFoundException(username));
+
+        int roomCount = chatRoomRepository.countByCreatedBy(user);
+        if (roomCount >= user.getMaxRooms()) {
+            throw new MaxRoomsCreatedByUserException(username, user.getMaxRooms());
+        }
 
         ChatRoom chatRoom = new ChatRoom();
         chatRoom.setName(request.getName());

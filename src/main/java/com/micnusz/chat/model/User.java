@@ -41,6 +41,9 @@ public class User {
     @OneToMany(mappedBy = "createdBy")
     private List<ChatRoom> createdRooms = new ArrayList<>();
 
+    private Integer maxRooms = 3;
+
+
     @OneToMany(mappedBy = "sender")
     private List<Message> messages = new ArrayList<>();
 
