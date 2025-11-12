@@ -19,7 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
+import com.micnusz.chat.exception.IncorrectPasswordException;
 import com.micnusz.chat.exception.MaxRoomsCreatedByUserException;
+import com.micnusz.chat.exception.RoomFullException;
+import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.mapper.ChatRoomMapper;
 import com.micnusz.chat.model.ChatRoom;
@@ -131,11 +134,126 @@ class ChatRoomServiceTest {
 
     @Test
     void getAllRooms_ShouldReturnEmptyList_WhenNoRoomsExists() {
-        
+
         when(chatRoomRepository.findAll()).thenReturn(List.of());
 
         List<ChatRoomResponseDTO> result = chatRoomService.getAllRooms();
 
         assertTrue(result.isEmpty());
     }
+    
+    //JoinRoom
+    @Test
+    void joinRoom_ShouldJoin_WhenUserExists_WhenThereIsLessThanMaxUsers_WhenPasswordExistsOrIsNull() {
+        String username = "michal";
+        String chatRoomName = "room1";
+        String password = "123456";
+        Long roomId = 1L;
+        User user = new User();
+        user.setUsername(username);
+
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setName(chatRoomName);
+        chatRoom.setPassword(password);
+
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+
+        chatRoomService.joinRoom(roomId, username, password);
+
+        assertTrue(chatRoom.getUsers().contains(user));
+        verify(chatRoomRepository).save(chatRoom);
+    }
+
+    @Test
+    void joinRoom_ShouldThrow_WhenNoUserFound() {
+        String username = "michal";
+        Long roomId = 1L;
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                () -> chatRoomService.joinRoom(roomId, username, "anyPassword"));
+
+        assertTrue(exception.getMessage().contains(username));
+
+        verify(chatRoomRepository, never()).save(any());
+    }
+
+    @Test
+    void joinRoom_ShouldThrow_WhenNoRoomFound() {
+        String username = "michal";
+        Long roomId = 1L;
+        User user = new User();
+        user.setUsername(username);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.empty());
+
+        RoomNotFoundException exception = assertThrows(RoomNotFoundException.class,
+                () -> chatRoomService.joinRoom(roomId, username, "TestPassword"));
+
+        assertTrue(exception.getMessage().contains(String.valueOf(roomId)));
+
+        verify(chatRoomRepository, never()).save(any());
+    }
+
+    @Test
+    void joinRoom_ShouldThrow_WhenRoomPasswordIncorrect() {
+        String username = "user";
+        String roomPassword = "testPassword";
+        String incorrectRoomPassword = "IncorrectPassword";
+        Long roomId = 1L;
+
+        User user = new User();
+        user.setUsername(username);
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setId(roomId);
+        chatRoom.setPassword(roomPassword);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+
+        IncorrectPasswordException exception = assertThrows(IncorrectPasswordException.class,
+                () -> chatRoomService.joinRoom(roomId, username, incorrectRoomPassword));
+
+        assertTrue(exception.getMessage().contains(incorrectRoomPassword));
+
+        verify(chatRoomRepository, never()).save(any());
+    }
+    
+    @Test
+    void joinRoom_ShouldThrow_WhenRoomFull() {
+        String username = "user";
+        String roomPassword = "testPassword";
+        Long roomId = 1L;
+        
+        User user = new User();
+        user.setUsername(username);
+        
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setId(roomId);
+        chatRoom.setPassword(roomPassword);
+        
+        for (int i = 0; i < chatRoom.getMaxUsers(); i++) {
+            chatRoom.getUsers().add(new User());
+        }
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+
+        RoomFullException exception = assertThrows(RoomFullException.class,
+                () -> chatRoomService.joinRoom(roomId, username, roomPassword));
+
+        assertTrue(exception.getMessage().contains(String.valueOf(roomId)));
+
+        verify(chatRoomRepository, never()).save(any());
+    
+    }
+    
+    
+
 }
