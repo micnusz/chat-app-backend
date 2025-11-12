@@ -1,5 +1,6 @@
 package com.micnusz.chat.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +21,7 @@ import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.exception.MaxRoomsCreatedByUserException;
 import com.micnusz.chat.exception.UserNotFoundException;
+import com.micnusz.chat.mapper.ChatRoomMapper;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
 import com.micnusz.chat.repository.ChatRoomRepository;
@@ -32,10 +34,13 @@ class ChatRoomServiceTest {
     private UserRepository userRepository;
     @Mock
     private ChatRoomRepository chatRoomRepository;
+    @Mock
+    private ChatRoomMapper chatRoomMapper;
     @InjectMocks
     private ChatRoomService chatRoomService;
 
 
+    //CreateRooom
     @Test
     void createRoom_ShouldCreateRoom_WhenUserExistsAndHasCapacity() {
         //given
@@ -104,4 +109,33 @@ class ChatRoomServiceTest {
 
     }
     
+
+    //GetAllRooms
+    @Test
+    void getAllRooms_ShouldReturnList_WhenRoomsExists() {
+        ChatRoom room1 = new ChatRoom();
+        room1.setName("room1");
+        ChatRoom room2 = new ChatRoom();
+        room2.setName("room2");
+
+        when(chatRoomRepository.findAll()).thenReturn(List.of(room1, room2));
+        when(chatRoomMapper.toDto(room1)).thenReturn(new ChatRoomResponseDTO(room1));
+        when(chatRoomMapper.toDto(room2)).thenReturn(new ChatRoomResponseDTO(room2));
+
+        List<ChatRoomResponseDTO> result = chatRoomService.getAllRooms();
+
+        assertEquals(2, result.size());
+        assertEquals("room1", result.get(0).getName());
+        assertEquals("room2", result.get(1).getName());
+    }
+
+    @Test
+    void getAllRooms_ShouldReturnEmptyList_WhenNoRoomsExists() {
+        
+        when(chatRoomRepository.findAll()).thenReturn(List.of());
+
+        List<ChatRoomResponseDTO> result = chatRoomService.getAllRooms();
+
+        assertTrue(result.isEmpty());
+    }
 }
