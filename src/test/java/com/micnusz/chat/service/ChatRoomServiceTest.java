@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,6 +25,7 @@ import com.micnusz.chat.exception.MaxRoomsCreatedByUserException;
 import com.micnusz.chat.exception.RoomFullException;
 import com.micnusz.chat.exception.RoomNotFoundException;
 import com.micnusz.chat.exception.UserNotFoundException;
+import com.micnusz.chat.exception.UserNotInRoomException;
 import com.micnusz.chat.mapper.ChatRoomMapper;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.User;
@@ -254,6 +256,174 @@ class ChatRoomServiceTest {
     
     }
     
-    
+    //LeaveRoom
+    @Test
+    void leaveRoom_ShouldThrow_WhenUserNotFound() {
+        Long roomId = 1L;
+        String username = "michal";
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                () -> chatRoomService.leaveRoom(roomId, username));
+
+        assertTrue(exception.getMessage().contains(username));
+        verify(chatRoomRepository, never()).save(any());
+    }
+
+    @Test
+    void leaveRoom_ShouldThrow_WhenRoomNotFound() {
+        Long roomId = 1L;
+        String username = "michal";
+        User user = new User();
+        user.setUsername(username);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.empty());
+
+        RoomNotFoundException exception = assertThrows(RoomNotFoundException.class,
+                () -> chatRoomService.leaveRoom(roomId, username));
+
+        assertTrue(exception.getMessage().contains(String.valueOf(roomId)));
+        verify(chatRoomRepository, never()).save(any());
+    }
+
+    @Test
+    void leaveRoom_ShouldThrow_WhenUserNotInRoom() {
+        Long roomId = 1L;
+        String username = "michal";
+        User user = new User();
+        user.setUsername(username);
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setId(roomId);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+
+        UserNotInRoomException exception = assertThrows(UserNotInRoomException.class,
+                () -> chatRoomService.leaveRoom(roomId, username));
+
+        assertTrue(exception.getMessage().contains(username));
+        verify(chatRoomRepository, never()).save(any());
+
+    }
+        
+    @Test
+    void leaveRoom_ShouldRemoveUser_WhenUserInRoom() {
+        Long roomId = 1L;
+        String username = "michal";
+
+        User user = new User();
+        user.setUsername(username);
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setId(roomId);
+        chatRoom.getUsers().add(user);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(chatRoom));
+
+        chatRoomService.leaveRoom(roomId, username);
+
+        assertFalse(chatRoom.getUsers().contains(user));
+        verify(chatRoomRepository).save(chatRoom);
+    }
+
+    //GetRoomById
+    @Test
+    void getRoomById_ShouldThrow_WhenRoomNotFound() {
+        Long roomId = 1L;
+        String username = "user";
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.empty());
+
+        RoomNotFoundException exception = assertThrows(RoomNotFoundException.class,
+                () -> chatRoomService.getRoomById(roomId, username));
+
+        assertTrue(exception.getMessage().contains(String.valueOf(roomId)));
+    }
+
+    @Test
+    void getRoomById_ShouldThrow_WhenUserNotFound() {
+        Long roomId = 1L;
+        String username = "user";
+        ChatRoom room = new ChatRoom();
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                () -> chatRoomService.getRoomById(roomId, username));
+
+        assertTrue(exception.getMessage().contains(username));
+    }
+
+    @Test
+    void getRoomById_ShouldThrow_WhenUserNotInRoom() {
+        Long roomId = 1L;
+        String username = "user";
+        ChatRoom room = new ChatRoom();
+        User user = new User();
+        user.setUsername(username);
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        UserNotInRoomException exception = assertThrows(UserNotInRoomException.class,
+                () -> chatRoomService.getRoomById(roomId, username));
+
+        assertTrue(exception.getMessage().contains(username));
+    }
+
+    @Test
+    void getRoomById_ShouldReturnDto_WhenUserInRoom() {
+        Long roomId = 1L;
+        String username = "user";
+
+        User user = new User();
+        user.setUsername(username);
+
+        ChatRoom room = new ChatRoom();
+        room.setId(roomId);
+        room.getUsers().add(user);
+
+        ChatRoomResponseDTO dto = new ChatRoomResponseDTO();
+        dto.setId(roomId);
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomMapper.toDto(room)).thenReturn(dto);
+
+        ChatRoomResponseDTO result = chatRoomService.getRoomById(roomId, username);
+
+        assertEquals(dto, result);
+        verify(chatRoomMapper).toDto(room);
+    }
+
+    //DeleteRoom
+    @Test
+    void deleteRoom_ShouldThrow_WhenRoomNotExists() {
+        Long roomId = 1L;
+        when(chatRoomRepository.existsById(roomId)).thenReturn(false);
+
+        RoomNotFoundException exception = assertThrows(RoomNotFoundException.class,
+                () -> chatRoomService.deleteRoom(roomId));
+
+        assertTrue(exception.getMessage().contains(String.valueOf(roomId)));
+        verify(chatRoomRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteRoom_ShouldDelete_WhenRoomExists() {
+        Long roomId = 1L;
+        when(chatRoomRepository.existsById(roomId)).thenReturn(true);
+
+        chatRoomService.deleteRoom(roomId);
+
+        verify(chatRoomRepository).deleteById(roomId);
+    }
+
+
 
 }
