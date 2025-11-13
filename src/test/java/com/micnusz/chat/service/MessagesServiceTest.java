@@ -1,5 +1,6 @@
 package com.micnusz.chat.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,6 +20,7 @@ import com.micnusz.chat.dto.MessageRequestDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
 import com.micnusz.chat.exception.AccessDeniedException;
 import com.micnusz.chat.exception.RoomNotFoundException;
+import com.micnusz.chat.exception.UserNotFoundException;
 import com.micnusz.chat.mapper.MessagesMapper;
 import com.micnusz.chat.model.ChatRoom;
 import com.micnusz.chat.model.Message;
@@ -178,5 +180,136 @@ class MessagesServiceTest {
         assertTrue(exception.getMessage().contains(sender.getUsername()));
         verify(messagesRepository, never()).save(any());
     }
+
+    //GetMessage
+    @Test
+    void getMessagesByRoomAsDTO_shouldThrow_whenRoomNotFound() {
+        Long roomId = 1L;
+        String username = "user";
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.empty());
+
+        RoomNotFoundException exception = assertThrows(RoomNotFoundException.class,
+                () -> messagesService.getMessagesByRoomAsDTO(roomId, username));
+
+        assertTrue(exception.getMessage().contains(roomId.toString()));
+        verify(messagesRepository, never()).findByChatRoomIdOrderByTimestampAsc(any());
+    }
+
+    @Test
+    void getMessagesByRoomAsDTO_shouldThrow_whenUserNotFound() {
+        Long roomId = 1L;
+        String username = "user";
+
+        ChatRoom room = new ChatRoom();
+        room.setId(roomId);
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class,
+                () -> messagesService.getMessagesByRoomAsDTO(roomId, username));
+
+        verify(messagesRepository, never()).findByChatRoomIdOrderByTimestampAsc(any());
+    }
+
+    @Test
+    void getMessagesByRoomAsDTO_shouldThrow_whenUserNotMember() {
+        Long roomId = 1L;
+        String username = "user";
+
+        ChatRoom room = new ChatRoom();
+        room.setId(roomId);
+
+        User user = new User();
+        user.setId(10L);
+        user.setUsername(username);
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.existsByIdAndUsersId(roomId, user.getId())).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+                () -> messagesService.getMessagesByRoomAsDTO(roomId, username));
+
+        verify(messagesRepository, never()).findByChatRoomIdOrderByTimestampAsc(any());
+    }
+
+    @Test
+    void getMessagesByRoomAsDTO_shouldReturnDecryptedMessages_whenUserMember() throws Exception {
+        Long roomId = 1L;
+        String username = "user";
+
+        ChatRoom room = new ChatRoom();
+        room.setId(roomId);
+
+        User user = new User();
+        user.setId(10L);
+        user.setUsername(username);
+
+        Message msg1 = new Message();
+        msg1.setId(1L);
+        msg1.setContent("encrypted1");
+
+        Message msg2 = new Message();
+        msg2.setId(2L);
+        msg2.setContent("encrypted2");
+
+        MessageResponseDTO dto1 = new MessageResponseDTO();
+        dto1.setContent("decrypted1");
+        MessageResponseDTO dto2 = new MessageResponseDTO();
+        dto2.setContent("decrypted2");
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.existsByIdAndUsersId(roomId, user.getId())).thenReturn(true);
+        when(messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)).thenReturn(List.of(msg1, msg2));
+        when(messagesEncryptionService.decrypt("encrypted1")).thenReturn("decrypted1");
+        when(messagesEncryptionService.decrypt("encrypted2")).thenReturn("decrypted2");
+        when(messagesMapper.toDto(msg1)).thenReturn(dto1);
+        when(messagesMapper.toDto(msg2)).thenReturn(dto2);
+
+        List<MessageResponseDTO> result = messagesService.getMessagesByRoomAsDTO(roomId, username);
+
+        assertTrue(result.size() == 2);
+        assertTrue(result.get(0).getContent().equals("decrypted1"));
+        assertTrue(result.get(1).getContent().equals("decrypted2"));
+    }
+
+    @Test
+    void getMessagesByRoomAsDTO_shouldReturnOriginalContent_whenDecryptionFails() throws Exception {
+        Long roomId = 1L;
+        String username = "user";
+
+        ChatRoom room = new ChatRoom();
+        room.setId(roomId);
+
+        User user = new User();
+        user.setId(10L);
+        user.setUsername(username);
+
+        Message msg = new Message();
+        msg.setId(1L);
+        msg.setContent("encrypted");
+
+        MessageResponseDTO dto = new MessageResponseDTO();
+        dto.setContent("encrypted");
+
+        when(chatRoomRepository.findById(roomId)).thenReturn(Optional.of(room));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(chatRoomRepository.existsByIdAndUsersId(roomId, user.getId())).thenReturn(true);
+        when(messagesRepository.findByChatRoomIdOrderByTimestampAsc(roomId)).thenReturn(List.of(msg));
+        when(messagesEncryptionService.decrypt("encrypted")).thenThrow(new RuntimeException("fail"));
+        when(messagesMapper.toDto(msg)).thenReturn(dto);
+
+        List<MessageResponseDTO> result = messagesService.getMessagesByRoomAsDTO(roomId, username);
+
+        assertTrue(result.size() == 1);
+        assertTrue(result.get(0).getContent().equals("encrypted"));
+    }
+
+
+
+
 
 }
