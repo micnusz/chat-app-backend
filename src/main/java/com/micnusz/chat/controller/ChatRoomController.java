@@ -16,23 +16,26 @@ import org.springframework.web.bind.annotation.RestController;
 import com.micnusz.chat.dto.ChatRoomRequestDTO;
 import com.micnusz.chat.dto.ChatRoomResponseDTO;
 import com.micnusz.chat.dto.MessageResponseDTO;
+import com.micnusz.chat.handler.ChatWebSocketHandler;
 import com.micnusz.chat.service.ChatRoomService;
 import com.micnusz.chat.service.MessagesService;
-
-import lombok.RequiredArgsConstructor;
-
-
-
-
 
 
 @RestController
 @RequestMapping("/api/chat")
-@RequiredArgsConstructor
 public class ChatRoomController {
+
+    private final ChatWebSocketHandler chatWebSocketHandler;
 
     private final ChatRoomService chatRoomService;
     private final MessagesService messagesService;
+
+
+    ChatRoomController(ChatWebSocketHandler chatWebSocketHandler, ChatRoomService chatRoomService, MessagesService messagesService) {
+        this.chatWebSocketHandler = chatWebSocketHandler;
+        this.chatRoomService = chatRoomService;
+        this.messagesService = messagesService;
+    }
 
 
     //CREATING ROOM
@@ -96,8 +99,9 @@ public class ChatRoomController {
 
     // DELETING ROOM/{ID}
     @DeleteMapping("/rooms/{id}")
-    public ResponseEntity<Void> deleteChatRoom(@PathVariable Long id) {
-        chatRoomService.deleteRoom(id);
+    public ResponseEntity<Void> deleteChatRoom(@PathVariable Long roomId) throws Exception {
+        chatWebSocketHandler.kickUsersFromRoom(roomId, "Room has been deleted");
+        chatRoomService.deleteRoom(roomId);
         return ResponseEntity.noContent().build();
     }
 

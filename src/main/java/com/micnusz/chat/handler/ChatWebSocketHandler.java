@@ -184,4 +184,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    public void kickUsersFromRoom(Long roomId, String reason) throws Exception {
+        List<WebSocketSession> sessionsToKick;
+        synchronized (sessions) {
+            sessionsToKick = sessions.stream()
+                    .filter(s -> roomId.equals(s.getAttributes().get("roomId")) && s.isOpen())
+                    .toList();
+        }
+
+        for (WebSocketSession s : sessionsToKick) {
+            Map<String, String> kickMsg = Map.of("error", reason);
+            s.sendMessage(new TextMessage(objectMapper.writeValueAsString(kickMsg)));
+            s.close(CloseStatus.NORMAL.withReason(reason));
+        }
+    }
+
 }
