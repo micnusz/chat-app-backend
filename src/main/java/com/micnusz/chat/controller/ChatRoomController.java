@@ -98,7 +98,7 @@ public class ChatRoomController {
     }
 
     // DELETING ROOM/{ID}
-    @DeleteMapping("/rooms/{id}")
+    @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<Void> deleteChatRoom(@PathVariable Long roomId) throws Exception {
         chatWebSocketHandler.kickUsersFromRoom(roomId, "Room has been deleted");
         chatRoomService.deleteRoom(roomId);
